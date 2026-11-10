@@ -69,12 +69,12 @@ export default function ZuviStore() {
   return (
     <div className="min-h-screen bg-[#06090e] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden">
       
-      {/* Soft Background Accents */}
+      {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-emerald-950/20 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Announcement Bar */}
       <div className="bg-emerald-950/80 text-emerald-300 text-[11px] py-2 px-4 text-center tracking-widest font-mono uppercase border-b border-emerald-900/50 backdrop-blur-md relative z-50">
-        IMS Ghaziabad Offline Event: 80+ Rings Sold in 2 Hours • Launch Price ₹350
+        IMS Ghaziabad Event: 80+ Rings Sold in 2 Hours • Launch Price ₹350
       </div>
 
       {/* Navigation Header */}
@@ -103,13 +103,13 @@ export default function ZuviStore() {
         </div>
       </header>
 
-      {/* Humanized Hero Section */}
+      {/* Natural Hero Section */}
       <motion.section 
         style={{ opacity: heroOpacity }}
         className="relative pt-16 pb-12 px-6 text-center max-w-4xl mx-auto space-y-6"
       >
         <div className="inline-block bg-emerald-950/60 border border-emerald-800/60 px-3.5 py-1 rounded-full text-amber-400 text-[11px] font-mono">
-          Flagship Drop • ₹350 Launch Special
+          Launch Price ₹350
         </div>
 
         <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-tight">
@@ -118,7 +118,7 @@ export default function ZuviStore() {
         </h2>
 
         <p className="text-slate-400 text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed">
-          No green marks, no color chipping when you sweat, wash hands, or head to campus. Real 18k vacuum-gold finish built for daily life.
+          No green marks. No color chipping when you sweat, wash your hands, or head to campus. Real 18k vacuum-gold made for daily life.
         </p>
 
         <div className="flex flex-wrap justify-center gap-4 pt-2">
@@ -155,7 +155,7 @@ export default function ZuviStore() {
               />
             </div>
 
-            {/* Product Details & Angle Switcher */}
+            {/* Details & Angle Switcher */}
             <div className="w-full md:w-1/2 space-y-6">
               <div>
                 <span className="text-xs uppercase font-mono text-amber-400">Real Studio Photos</span>
@@ -165,7 +165,7 @@ export default function ZuviStore() {
                 </p>
               </div>
 
-              {/* Angle Buttons */}
+              {/* Angle Selector */}
               <div className="space-y-2">
                 <span className="text-[11px] uppercase font-mono text-slate-500">Select Angle:</span>
                 <div className="grid grid-cols-2 gap-2">
@@ -191,7 +191,7 @@ export default function ZuviStore() {
                     <span className="text-3xl font-serif text-amber-400 font-bold">₹{product.price}</span>
                     <span className="text-sm text-slate-500 line-through">₹{product.originalPrice}</span>
                   </div>
-                  <span className="text-[11px] text-emerald-400 font-mono">Free Campus Delivery / Local Shipping</span>
+                  <span className="text-[11px] text-emerald-400 font-mono">Free delivery on campus</span>
                 </div>
                 <button 
                   onClick={handleBuyNow}
@@ -206,37 +206,38 @@ export default function ZuviStore() {
         </div>
       </section>
 
-      {/* Humanized "Why It Lasts" Section */}
+      {/* Humanized Feature Section */}
       <section id="proof" className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-12 space-y-2">
-          <span className="text-amber-400 text-xs font-mono uppercase">Straight To The Point</span>
+        <div className="text-center mb-10">
           <h3 className="text-3xl font-serif text-white">Why this ring won't turn your finger green</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-            <div className="text-amber-400 font-mono text-sm font-bold">01 / Vacuum Plating</div>
-            <h4 className="text-xl font-serif text-white">Real Gold Layer</h4>
+            <h4 className="text-xl font-serif text-white">Real gold that stays</h4>
             <p className="text-slate-400 text-sm font-light leading-relaxed">
-              Cheap street rings use flash water-plating that rubs off in 3 days. We use vacuum PVD plating so the 18k gold finish stays locked onto the steel base.
+              Most cheap rings use thin plating that starts peeling in a few days. We use vacuum plating so the 18k gold actually sticks and doesn’t wear off easily.
             </p>
           </div>
 
           <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-            <div className="text-amber-400 font-mono text-sm font-bold">02 / Everyday Proof</div>
-            <h4 className="text-xl font-serif text-white">Water & Sweat Safe</h4>
+            <h4 className="text-xl font-serif text-white">No need to remove it</h4>
             <p className="text-slate-400 text-sm font-light leading-relaxed">
-              You don't need to take it off every time you wash your hands, hit the gym, or get caught in rain. It’s built to handle daily wear.
+              Wash your hands, go to the gym, get caught in rain — you can keep it on. It’s made for daily use.
             </p>
           </div>
 
           <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-            <div className="text-amber-400 font-mono text-sm font-bold">03 / Dual Emeralds</div>
-            <h4 className="text-xl font-serif text-white">Solid Prong Setting</h4>
+            <h4 className="text-xl font-serif text-white">Stones that don’t fall out</h4>
             <p className="text-slate-400 text-sm font-light leading-relaxed">
-              The emerald stones are securely held in set prongs rather than glued on, preventing stones from popping loose.
+              The emeralds are held with proper prongs, not just glued. They’re much less likely to come loose.
             </p>
           </div>
+        </div>
+
+        {/* Casual Grounding Summary Line */}
+        <div className="text-center mt-8">
+          <p className="text-slate-500 text-xs font-mono italic">Basically, it’s built to survive real student life.</p>
         </div>
       </section>
 
@@ -249,7 +250,7 @@ export default function ZuviStore() {
               <span className="bg-amber-500/20 text-amber-400 text-[11px] font-mono px-3 py-1 rounded-full border border-amber-500/30">
                 REAL EVENT PROOF
               </span>
-              <h3 className="text-3xl font-serif text-white">IMS Ghaziabad Offline Event</h3>
+              <h3 className="text-3xl font-serif text-white">IMS Ghaziabad Event</h3>
               <p className="text-slate-300 text-sm leading-relaxed font-light">
                 We brought ZUVI directly to students at our IMS Ghaziabad campus exhibition. Over 80+ rings were picked up live on the spot within 2 hours.
               </p>
