@@ -1,100 +1,38 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-
-// --- 3D Interactive Ring Perspective Component ---
-function Interactive3DRing({ activeRingImage }: { activeRingImage: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [20, -20]), { stiffness: 150, damping: 15 });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-25, 25]), { stiffness: 150, damping: 15 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mouseX.set(x);
-    mouseY.set(y);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
-
-  return (
-    <div 
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative w-full h-[450px] md:h-[520px] flex items-center justify-center cursor-grab active:cursor-grabbing perspective-1000 select-none"
-    >
-      <motion.div 
-        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center rounded-3xl bg-gradient-to-tr from-emerald-950/80 via-slate-900 to-emerald-950/40 border border-emerald-800/50 shadow-2xl overflow-hidden p-6"
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none" />
-        
-        {/* Actual Product Photo from public/images/ */}
-        <motion.img 
-          key={activeRingImage}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          src={`/images/${activeRingImage}`} 
-          alt="Imperial Emerald Ring" 
-          style={{ transform: 'translateZ(40px)' }}
-          className="max-h-full max-w-full object-contain relative z-20 drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)]"
-        />
-
-        <div 
-          style={{ transform: 'translateZ(50px)' }}
-          className="absolute bottom-4 bg-slate-950/90 border border-amber-400/50 px-4 py-1.5 rounded-full backdrop-blur-md z-30 shadow-xl"
-        >
-          <span className="text-[10px] font-mono tracking-widest text-amber-300 uppercase">18K Vacuum Gold • Anti-Tarnish</span>
-        </div>
-      </motion.div>
-
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-mono tracking-widest text-slate-400 flex items-center gap-2 bg-slate-900/80 px-4 py-1.5 rounded-full border border-emerald-900/40 backdrop-blur-md">
-        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-        MOVE MOUSE TO ROTATE 3D PERSPECTIVE
-      </div>
-    </div>
-  );
-}
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 export default function ZuviStore() {
   const { scrollYProgress } = useScroll();
-  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const scaleHero = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
-  const [activeRingImage, setActiveRingImage] = useState('ring1.jpeg');
+  // Interactive 3D Ring Angles using your actual local images (ring1.jpeg to ring4.jpeg)
+  const ringAngles = [
+    { id: 'ring1.jpeg', label: 'Front Brilliance' },
+    { id: 'ring2.jpeg', label: 'Emerald Cut Angle' },
+    { id: 'ring3.jpeg', label: '18K Band Profile' },
+    { id: 'ring4.jpeg', label: 'Dual Stone Detail' },
+  ];
+  const [currentRingIndex, setCurrentRingIndex] = useState(0);
+
+  // Video State
   const [activeVideo, setActiveVideo] = useState('video1.mp4');
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  const ringImages = ['ring1.jpeg', 'ring2.jpeg', 'ring3.jpeg', 'ring4.jpeg'];
-  const campusVideos = [
-    { title: 'IMS Pop-Up Highlights', file: 'video1.mp4' },
-    { title: 'Live Student Try-Ons', file: 'video2.mp4' },
-    { title: 'Customer Reactions', file: 'video3.mp4' },
-  ];
+  // Checkout State
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', phone: '', address: '', pincode: '', city: '' });
+  const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
+  const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
 
   const product = {
     name: 'Imperial Emerald Anti-Tarnish Ring',
     price: 350,
     originalPrice: 999,
     tagline: 'Vacuum-plated 18k gold with dual brilliant-cut emerald stones.',
-    badge: 'Launch Special — ₹350 ONLY'
   };
-
-  const [formData, setFormData] = useState({ name: '', phone: '', address: '', pincode: '', city: '' });
-  const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
-  const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
 
   const handleBuyNow = () => {
     setIsCheckoutOpen(true);
@@ -130,34 +68,36 @@ export default function ZuviStore() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden">
+    <div className="min-h-screen bg-[#030712] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden">
       
-      {/* Background Particle Grid */}
-      <div className="fixed inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]" />
+      {/* Ambient Luxury Backdrop Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-emerald-900/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-[40%] left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none" />
 
       {/* Announcement Bar */}
-      <div className="bg-emerald-950/90 text-emerald-300 text-[11px] py-2.5 px-4 text-center tracking-[0.2em] font-mono uppercase border-b border-emerald-800/60 backdrop-blur-md relative z-50">
+      <div className="bg-emerald-950/90 text-emerald-300 text-[11px] py-2.5 px-4 text-center tracking-[0.25em] font-mono uppercase border-b border-emerald-800/50 backdrop-blur-md relative z-50">
         ✨ ZUVI OFFSHORE POP-UP @ IMS CAMPUS • 80+ SOLD IN 2 HOURS ✨
       </div>
 
-      {/* Navigation Header */}
-      <header className="border-b border-emerald-900/40 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
+      {/* Sticky Navigation Header */}
+      <header className="border-b border-emerald-900/30 bg-[#030712]/80 backdrop-blur-2xl sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-serif tracking-[0.25em] text-amber-400 font-bold">ZUVI</h1>
-            <span className="hidden sm:inline-block text-[9px] uppercase tracking-widest bg-emerald-900/40 text-emerald-300 px-3 py-1 rounded-full border border-emerald-700/40 font-mono">
+            <h1 className="text-3xl font-serif tracking-[0.3em] text-amber-400 font-bold">ZUVI</h1>
+            <span className="hidden sm:inline-block text-[9px] uppercase tracking-widest bg-emerald-950 text-emerald-300 px-3 py-1 rounded-full border border-emerald-800/60 font-mono">
               High Jewelry Architecture
             </span>
           </div>
 
           <div className="flex items-center gap-6">
             <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest text-slate-300 font-mono">
-              <a href="#hero3d" className="hover:text-amber-400 transition">3D Showcase</a>
+              <a href="#interactive-3d" className="hover:text-amber-400 transition">3D Inspector</a>
+              <a href="#science" className="hover:text-amber-400 transition">Anti-Tarnish Science</a>
               <a href="#event" className="hover:text-amber-400 transition">IMS Pop-Up</a>
             </nav>
             <button 
               onClick={handleBuyNow}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition duration-200 shadow-[0_0_20px_rgba(245,158,11,0.3)] text-xs uppercase tracking-wider font-mono"
+              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition duration-300 shadow-[0_0_25px_rgba(245,158,11,0.3)] text-xs uppercase tracking-wider font-mono"
             >
               Order Ring — ₹350
             </button>
@@ -165,71 +105,212 @@ export default function ZuviStore() {
         </div>
       </header>
 
-      {/* Hero 3D Scrollytelling Section */}
+      {/* Cinematic Hero Section */}
       <motion.section 
-        style={{ opacity: opacityHero, scale: scaleHero }}
-        id="hero3d" 
-        className="relative min-h-[90vh] flex flex-col items-center justify-center px-6 pt-8 pb-20"
+        style={{ opacity: heroOpacity, scale: heroScale }}
+        className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 pt-12 pb-20 text-center"
       >
-        <div className="max-w-5xl mx-auto text-center space-y-6 relative z-10 w-full">
-          <div className="inline-flex items-center gap-2 bg-emerald-900/30 border border-emerald-700/50 px-4 py-1.5 rounded-full text-amber-400 text-[11px] uppercase tracking-[0.3em] font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            Interactive 3D Ring Viewer
+        <div className="max-w-4xl mx-auto space-y-6 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 bg-emerald-950/80 border border-emerald-800/80 px-4 py-1.5 rounded-full text-amber-400 text-[11px] uppercase tracking-[0.3em] font-mono shadow-lg"
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            Launch Special Collection
+          </motion.div>
+
+          <motion.h2 
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl md:text-8xl font-serif tracking-tight text-white leading-[1.1]"
+          >
+            Uncompromising Radiance, <br />
+            <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent italic">
+              Built for Eternity.
+            </span>
+          </motion.h2>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-light leading-relaxed"
+          >
+            Vacuum-plated 18K gold combined with dual brilliant-cut emerald stones. Designed to resist water, sweat, and daily wear without ever losing its luster.
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap justify-center gap-4 pt-4"
+          >
+            <button 
+              onClick={handleBuyNow}
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-10 py-4 rounded-xl transition shadow-[0_0_35px_rgba(245,158,11,0.4)] text-sm uppercase tracking-wider font-mono"
+            >
+              Claim Imperial Ring — ₹350
+            </button>
+            <a 
+              href="#interactive-3d"
+              className="border border-emerald-800/80 hover:border-amber-400 text-emerald-200 hover:text-white px-8 py-4 rounded-xl transition backdrop-blur-md text-sm font-mono tracking-wider uppercase flex items-center gap-2"
+            >
+              <span>↓</span> Inspect 3D Angles
+            </a>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Tier 1 Upgrade: Real Interactive 3D Multi-Angle Ring Inspector */}
+      <section id="interactive-3d" className="max-w-5xl mx-auto px-6 py-20">
+        <div className="text-center space-y-3 mb-12">
+          <span className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Interactive 3D Inspector</span>
+          <h3 className="text-3xl md:text-5xl font-serif text-white">Rotate & Inspect Every Facet</h3>
+          <p className="text-slate-400 text-sm max-w-lg mx-auto font-light">
+            Switch angles to examine the mirror polish, gold refraction, and emerald setting precision.
+          </p>
+        </div>
+
+        <div className="bg-gradient-to-b from-emerald-950/30 to-[#030712] border border-emerald-800/40 rounded-3xl p-6 md:p-12 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+
+          {/* Active Ring Image Stage */}
+          <div className="relative h-72 md:h-[420px] flex items-center justify-center p-4">
+            <motion.img 
+              key={ringAngles[currentRingIndex].id}
+              initial={{ opacity: 0, scale: 0.95, rotateY: -10 }}
+              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+              transition={{ duration: 0.4 }}
+              src={`/images/${ringAngles[currentRingIndex].id}`} 
+              alt={ringAngles[currentRingIndex].label}
+              className="max-h-full max-w-full object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)] relative z-10"
+            />
           </div>
 
-          <h2 className="text-4xl md:text-7xl font-serif tracking-tight text-white leading-tight">
-            Immortal Radiance, <br />
-            <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent italic">
-              Built for Real Life.
-            </span>
-          </h2>
-
-          {/* Interactive 3D Ring Display using actual ring1-4.jpeg */}
-          <Interactive3DRing activeRingImage={activeRingImage} />
-
-          {/* Thumbnail Image Switcher */}
-          <div className="flex justify-center gap-3 pt-2">
-            {ringImages.map((img) => (
+          {/* Angle Switcher Controls */}
+          <div className="flex flex-wrap justify-center items-center gap-3 mt-8 pt-6 border-t border-emerald-900/40 relative z-20">
+            {ringAngles.map((angle, idx) => (
               <button
-                key={img}
-                onClick={() => setActiveRingImage(img)}
-                className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition duration-200 ${
-                  activeRingImage === img ? 'border-amber-400 scale-105 shadow-lg shadow-amber-500/20' : 'border-emerald-900/60 opacity-60 hover:opacity-100'
+                key={angle.id}
+                onClick={() => setCurrentRingIndex(idx)}
+                className={`flex items-center gap-3 px-5 py-3 rounded-xl border text-xs font-mono tracking-wider uppercase transition duration-300 ${
+                  currentRingIndex === idx 
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-lg shadow-amber-500/20 scale-105' 
+                    : 'bg-slate-900/80 border-emerald-900/60 text-slate-300 hover:border-amber-400/50'
                 }`}
               >
-                <img src={`/images/${img}`} alt="Ring Thumbnail" className="w-full h-full object-cover" />
+                <span className={`w-2 h-2 rounded-full ${currentRingIndex === idx ? 'bg-slate-950' : 'bg-emerald-400'}`} />
+                {angle.label}
               </button>
             ))}
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4 pt-6">
+          {/* Price & Buy Bar Inside Inspector */}
+          <div className="mt-8 bg-slate-950/80 border border-emerald-900/50 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-20">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-serif text-amber-400 font-bold">₹{product.price}</span>
+                <span className="text-base text-slate-500 line-through">₹{product.originalPrice}</span>
+                <span className="text-[10px] bg-emerald-900/80 text-emerald-300 px-2.5 py-1 rounded-md font-mono border border-emerald-700/50">Save 65% Launch Deal</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">{product.tagline}</p>
+            </div>
             <button 
               onClick={handleBuyNow}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-10 py-4 rounded-xl transition shadow-[0_0_30px_rgba(245,158,11,0.4)] text-sm uppercase tracking-wider font-mono"
+              className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition shadow-lg shadow-amber-500/20 text-xs uppercase tracking-wider font-mono"
             >
-              Claim Launch Price — ₹350
+              Buy Imperial Ring — ₹350
             </button>
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* IMS Campus Pop-Up Video Section using actual video1-3.mp4 */}
+      {/* Tier 2 Upgrade: Scrollytelling "Why It Doesn’t Fade" Science Section */}
+      <section id="science" className="max-w-7xl mx-auto px-6 py-24">
+        <div className="text-center mb-16 space-y-3">
+          <span className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Material Science</span>
+          <h3 className="text-3xl md:text-5xl font-serif text-white">Why ZUVI Never Fades</h3>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto">
+            Traditional jewelry uses weak electroplating that chips in weeks. ZUVI is engineered with aerospace-grade durability.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-xl font-serif">
+              01
+            </div>
+            <h4 className="text-2xl font-serif text-white">Vacuum PVD Bonding</h4>
+            <p className="text-slate-400 text-sm leading-relaxed font-light">
+              Gold ions are vaporized in a vacuum chamber and permanently fused into the stainless steel substrate at molecular levels.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-xl font-serif">
+              02
+            </div>
+            <h4 className="text-2xl font-serif text-white">Water & Sweat Armor</h4>
+            <p className="text-slate-400 text-sm leading-relaxed font-light">
+              Completely waterproof and sweat-proof. Wear it in the gym, shower, or pool without tarnishing, oxidation, or turning skin green.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-xl font-serif">
+              03
+            </div>
+            <h4 className="text-2xl font-serif text-white">Brilliant-Cut Emeralds</h4>
+            <p className="text-slate-400 text-sm leading-relaxed font-light">
+              Hand-set dual emerald stones precision-crafted to refract light dynamically from every angle with mirror-like clarity.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Tier 2 Upgrade: Immersive IMS Campus Pop-Up Story Section */}
       <section id="event" className="max-w-6xl mx-auto px-6 py-20">
-        <div className="bg-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+        <div className="bg-slate-900/90 border border-emerald-800/40 rounded-3xl p-8 md:p-14 shadow-2xl relative overflow-hidden backdrop-blur-xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             
             <div className="space-y-6">
               <span className="bg-amber-500 text-slate-950 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full font-mono">
                 IMS CAMPUS POP-UP EXHIBITION
               </span>
-              <h3 className="text-3xl md:text-4xl font-serif text-white">Live Event Reels</h3>
+              <h3 className="text-3xl md:text-5xl font-serif text-white">80+ Rings Sold in 120 Minutes</h3>
               <p className="text-slate-300 text-sm leading-relaxed font-light">
-                Our offline pop-up at IMS campus was an absolute storm! Over 80+ rings sold in just 2 hours with live student try-ons and instant UPI settlements.
+                Our offline launch at IMS campus brought out an incredible crowd. Students experienced the anti-tarnish quality live, tried them on, and paid instantly via UPI in under 30 seconds.
               </p>
               
+              <div className="grid grid-cols-2 gap-4 pt-2 font-mono text-xs">
+                <div className="bg-emerald-950/60 border border-emerald-800/50 p-4 rounded-xl">
+                  <span className="text-amber-400 text-lg font-bold block">80+ Sold</span>
+                  <span className="text-slate-400">In 2 Hours Live</span>
+                </div>
+                <div className="bg-emerald-950/60 border border-emerald-800/50 p-4 rounded-xl">
+                  <span className="text-amber-400 text-lg font-bold block">&lt; 30 Sec</span>
+                  <span className="text-slate-400">Instant UPI Checkout</span>
+                </div>
+              </div>
+
               {/* Video Selector Tabs */}
-              <div className="flex flex-col gap-2 pt-2">
-                {campusVideos.map((vid) => (
+              <div className="flex flex-col gap-2 pt-4">
+                {[
+                  { title: 'IMS Pop-Up Event Highlights', file: 'video1.mp4' },
+                  { title: 'Live Student Try-Ons & Reactions', file: 'video2.mp4' },
+                  { title: 'Behind the Scenes & Sales Surge', file: 'video3.mp4' },
+                ].map((vid) => (
                   <button
                     key={vid.file}
                     onClick={() => { setActiveVideo(vid.file); setIsVideoModalOpen(true); }}
@@ -250,7 +331,7 @@ export default function ZuviStore() {
             </div>
 
             {/* Embedded Live Video Player */}
-            <div className="relative h-80 rounded-2xl overflow-hidden border border-emerald-800/50 bg-slate-950 shadow-2xl flex items-center justify-center">
+            <div className="relative h-96 rounded-2xl overflow-hidden border border-emerald-800/50 bg-slate-950 shadow-2xl flex items-center justify-center">
               <video 
                 key={activeVideo}
                 controls
@@ -287,7 +368,7 @@ export default function ZuviStore() {
         </div>
       )}
 
-      {/* Checkout Modal */}
+      {/* Secure Checkout Modal */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-slate-900 border border-emerald-800/40 w-full max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl relative my-8">
