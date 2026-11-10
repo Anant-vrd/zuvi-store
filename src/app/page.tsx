@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 export default function ZuviStore() {
@@ -8,7 +8,7 @@ export default function ZuviStore() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
-  // Interactive 3D Ring Angles using your actual local images (ring1.jpeg to ring4.jpeg)
+  // Ring Angles using your actual local photos in public/images/
   const ringAngles = [
     { id: 'ring1.jpeg', label: 'Front Brilliance' },
     { id: 'ring2.jpeg', label: 'Emerald Cut Angle' },
@@ -17,7 +17,7 @@ export default function ZuviStore() {
   ];
   const [currentRingIndex, setCurrentRingIndex] = useState(0);
 
-  // Video State
+  // Video State for IMS Pop-Up Reels
   const [activeVideo, setActiveVideo] = useState('video1.mp4');
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
@@ -70,9 +70,9 @@ export default function ZuviStore() {
   return (
     <div className="min-h-screen bg-[#030712] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden">
       
-      {/* Ambient Luxury Backdrop Glows */}
+      {/* Ambient Luxury Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-emerald-900/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-[40%] left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute top-[35%] left-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[160px] pointer-events-none" />
 
       {/* Announcement Bar */}
       <div className="bg-emerald-950/90 text-emerald-300 text-[11px] py-2.5 px-4 text-center tracking-[0.25em] font-mono uppercase border-b border-emerald-800/50 backdrop-blur-md relative z-50">
@@ -91,7 +91,7 @@ export default function ZuviStore() {
 
           <div className="flex items-center gap-6">
             <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest text-slate-300 font-mono">
-              <a href="#interactive-3d" className="hover:text-amber-400 transition">3D Inspector</a>
+              <a href="#interactive-3d" className="hover:text-amber-400 transition">Ring Inspector</a>
               <a href="#science" className="hover:text-amber-400 transition">Anti-Tarnish Science</a>
               <a href="#event" className="hover:text-amber-400 transition">IMS Pop-Up</a>
             </nav>
@@ -108,7 +108,7 @@ export default function ZuviStore() {
       {/* Cinematic Hero Section */}
       <motion.section 
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative min-h-[85vh] flex flex-col items-center justify-center px-6 pt-12 pb-20 text-center"
+        className="relative min-h-[75vh] flex flex-col items-center justify-center px-6 pt-10 pb-16 text-center"
       >
         <div className="max-w-4xl mx-auto space-y-6 relative z-10">
           <motion.div 
@@ -124,7 +124,7 @@ export default function ZuviStore() {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-8xl font-serif tracking-tight text-white leading-[1.1]"
+            className="text-5xl md:text-8xl font-serif tracking-tight text-white leading-[1.08]"
           >
             Uncompromising Radiance, <br />
             <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent italic">
@@ -136,16 +136,16 @@ export default function ZuviStore() {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-slate-400 text-base md:text-xl max-w-2xl mx-auto font-light leading-relaxed"
+            className="text-slate-400 text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed"
           >
-            Vacuum-plated 18K gold combined with dual brilliant-cut emerald stones. Designed to resist water, sweat, and daily wear without ever losing its luster.
+            Vacuum-plated 18K gold with dual brilliant-cut emerald stones. Designed to resist water, sweat, and daily wear without ever losing its luster.
           </motion.p>
 
           <motion.div 
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-wrap justify-center gap-4 pt-4"
+            className="flex flex-wrap justify-center gap-4 pt-2"
           >
             <button 
               onClick={handleBuyNow}
@@ -157,39 +157,39 @@ export default function ZuviStore() {
               href="#interactive-3d"
               className="border border-emerald-800/80 hover:border-amber-400 text-emerald-200 hover:text-white px-8 py-4 rounded-xl transition backdrop-blur-md text-sm font-mono tracking-wider uppercase flex items-center gap-2"
             >
-              <span>↓</span> Inspect 3D Angles
+              <span>↓</span> Inspect Ring Angles
             </a>
           </motion.div>
         </div>
       </motion.section>
 
-      {/* Tier 1 Upgrade: Real Interactive 3D Multi-Angle Ring Inspector */}
-      <section id="interactive-3d" className="max-w-5xl mx-auto px-6 py-20">
-        <div className="text-center space-y-3 mb-12">
-          <span className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Interactive 3D Inspector</span>
-          <h3 className="text-3xl md:text-5xl font-serif text-white">Rotate & Inspect Every Facet</h3>
+      {/* Interactive Ring Angle Inspector Showcase */}
+      <section id="interactive-3d" className="max-w-6xl mx-auto px-6 py-16">
+        <div className="text-center space-y-3 mb-10">
+          <span className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Multi-Angle Inspector</span>
+          <h3 className="text-3xl md:text-5xl font-serif text-white">Examine Every Detail</h3>
           <p className="text-slate-400 text-sm max-w-lg mx-auto font-light">
-            Switch angles to examine the mirror polish, gold refraction, and emerald setting precision.
+            Select different views to inspect the mirror polish, gold refraction, and dual emerald stone setting.
           </p>
         </div>
 
-        <div className="bg-gradient-to-b from-emerald-950/30 to-[#030712] border border-emerald-800/40 rounded-3xl p-6 md:p-12 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+        <div className="bg-gradient-to-b from-emerald-950/30 to-[#030712] border border-emerald-800/50 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
           {/* Active Ring Image Stage */}
-          <div className="relative h-72 md:h-[420px] flex items-center justify-center p-4">
+          <div className="relative h-80 md:h-[420px] flex items-center justify-center p-4">
             <motion.img 
               key={ringAngles[currentRingIndex].id}
-              initial={{ opacity: 0, scale: 0.95, rotateY: -10 }}
-              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-              transition={{ duration: 0.4 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
               src={`/images/${ringAngles[currentRingIndex].id}`} 
               alt={ringAngles[currentRingIndex].label}
               className="max-h-full max-w-full object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)] relative z-10"
             />
           </div>
 
-          {/* Angle Switcher Controls */}
+          {/* Angle Switcher Buttons */}
           <div className="flex flex-wrap justify-center items-center gap-3 mt-8 pt-6 border-t border-emerald-900/40 relative z-20">
             {ringAngles.map((angle, idx) => (
               <button
@@ -207,8 +207,8 @@ export default function ZuviStore() {
             ))}
           </div>
 
-          {/* Price & Buy Bar Inside Inspector */}
-          <div className="mt-8 bg-slate-950/80 border border-emerald-900/50 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-20">
+          {/* Pricing & Instant Buy Bar */}
+          <div className="mt-8 bg-slate-950/90 border border-emerald-900/60 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-20 shadow-xl">
             <div>
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-serif text-amber-400 font-bold">₹{product.price}</span>
@@ -227,7 +227,7 @@ export default function ZuviStore() {
         </div>
       </section>
 
-      {/* Tier 2 Upgrade: Scrollytelling "Why It Doesn’t Fade" Science Section */}
+      {/* Scrollytelling Science Section with Staggered Motion */}
       <section id="science" className="max-w-7xl mx-auto px-6 py-24">
         <div className="text-center mb-16 space-y-3">
           <span className="text-amber-400 text-xs font-mono uppercase tracking-[0.3em]">Material Science</span>
@@ -239,9 +239,14 @@ export default function ZuviStore() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
             whileHover={{ y: -5 }}
-            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl"
+            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl relative overflow-hidden group"
           >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition" />
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-xl font-serif">
               01
             </div>
@@ -252,9 +257,14 @@ export default function ZuviStore() {
           </motion.div>
 
           <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             whileHover={{ y: -5 }}
-            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl"
+            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl relative overflow-hidden group"
           >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition" />
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-xl font-serif">
               02
             </div>
@@ -265,9 +275,14 @@ export default function ZuviStore() {
           </motion.div>
 
           <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             whileHover={{ y: -5 }}
-            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl"
+            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border border-emerald-800/40 rounded-3xl p-8 backdrop-blur-md space-y-4 shadow-xl relative overflow-hidden group"
           >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition" />
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-400 text-xl font-serif">
               03
             </div>
@@ -279,7 +294,7 @@ export default function ZuviStore() {
         </div>
       </section>
 
-      {/* Tier 2 Upgrade: Immersive IMS Campus Pop-Up Story Section */}
+      {/* High-Visual-Weight IMS Pop-Up Section */}
       <section id="event" className="max-w-6xl mx-auto px-6 py-20">
         <div className="bg-slate-900/90 border border-emerald-800/40 rounded-3xl p-8 md:p-14 shadow-2xl relative overflow-hidden backdrop-blur-xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -294,12 +309,12 @@ export default function ZuviStore() {
               </p>
               
               <div className="grid grid-cols-2 gap-4 pt-2 font-mono text-xs">
-                <div className="bg-emerald-950/60 border border-emerald-800/50 p-4 rounded-xl">
-                  <span className="text-amber-400 text-lg font-bold block">80+ Sold</span>
+                <div className="bg-emerald-950/60 border border-emerald-800/50 p-4 rounded-xl shadow-lg">
+                  <span className="text-amber-400 text-xl font-bold block">80+ Sold</span>
                   <span className="text-slate-400">In 2 Hours Live</span>
                 </div>
-                <div className="bg-emerald-950/60 border border-emerald-800/50 p-4 rounded-xl">
-                  <span className="text-amber-400 text-lg font-bold block">&lt; 30 Sec</span>
+                <div className="bg-emerald-950/60 border border-emerald-800/50 p-4 rounded-xl shadow-lg">
+                  <span className="text-amber-400 text-xl font-bold block">&lt; 30 Sec</span>
                   <span className="text-slate-400">Instant UPI Checkout</span>
                 </div>
               </div>
@@ -331,7 +346,7 @@ export default function ZuviStore() {
             </div>
 
             {/* Embedded Live Video Player */}
-            <div className="relative h-96 rounded-2xl overflow-hidden border border-emerald-800/50 bg-slate-950 shadow-2xl flex items-center justify-center">
+            <div className="relative h-96 rounded-2xl overflow-hidden border border-emerald-800/50 bg-slate-950 shadow-2xl flex items-center justify-center group cursor-pointer" onClick={() => setIsVideoModalOpen(true)}>
               <video 
                 key={activeVideo}
                 controls
