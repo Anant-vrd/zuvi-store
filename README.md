@@ -2,7 +2,9 @@
 
 Live at **[zuvis.in](https://zuvis.in)**
 
-A fast, single-product e-commerce storefront built for **ZUVI**, featuring the flagship **Imperial Emerald Ring** (18k vacuum-plated gold with dual emerald stones). Designed for mobile-first speed, real-world social proof, and frictionless UPI checkout.
+Built and maintained by **[Chitranjan Vikram Singh](https://github.com/chitranjanvrd-win)** for **ZUVI** (founded by **Anant Pratap Singh**).
+
+A fast, single-product e-commerce storefront featuring the flagship **Imperial Emerald Ring** (18k vacuum-plated gold with dual emerald stones). Designed for mobile-first speed, real-world social proof, and frictionless UPI checkout.
 
 ---
 
