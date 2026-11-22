@@ -72,7 +72,7 @@ export default function ZuviStore() {
   const categories: CategoryName[] = ['RINGS', 'EARINGS', 'JUMKA', 'BRACELTS', 'PENDANTS'];
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>('RINGS');
 
-  // Full Store Catalog (update filenames as you add new assets to public/images/)
+  // Full Store Catalog matched to public/images/
   const catalogItems: StoreProduct[] = [
     // RINGS
     {
@@ -84,9 +84,9 @@ export default function ZuviStore() {
       badge: '360° PREVIEW',
       tagline:
         'Pear and baguette emerald stones in 18k PVD gold over stainless steel. Built for everyday wear.',
-      cardImage: '360 Gold Emerald Ring Rotation_2.gif',
+      cardImage: '360 Gold Emerald Ring Rotation.gif',
       angles: [
-        { file: '360 Gold Emerald Ring Rotation_2.gif', label: '360° Rotation' },
+        { file: '360 Gold Emerald Ring Rotation.gif', label: '360° Rotation' },
         { file: 'Emerald-Set Gold Ring on Velvet.png', label: 'Front Stones' },
         { file: 'Emerald and Gold Ring on Velvet.png', label: 'Side Profile' },
         { file: 'Emerald Gold Ring on Velvet.png', label: 'Band & Prongs' },
@@ -115,12 +115,13 @@ export default function ZuviStore() {
       name: 'Golden Double-Wrap Ring',
       price: 350,
       originalPrice: 999,
-      badge: 'NEW DROP',
+      badge: '360° + VELVET',
       tagline:
         'Multi-row pavé spiral wrap accented with marquise and baguette stones in 18k PVD gold.',
       cardImage: 'Golden Double-Wrap Ring on Green Velvet-1.png',
       angles: [
         { file: 'Golden Double-Wrap Ring on Green Velvet-1.png', label: 'Velvet Studio' },
+        { file: 'Rotating Diamond Ring on Velvet.gif', label: '360° Rotation' },
       ],
     },
     {
@@ -161,11 +162,12 @@ export default function ZuviStore() {
       name: 'Butterfly Pavé Gold Ring',
       price: 350,
       originalPrice: 999,
-      badge: 'MULTI-ANGLE',
+      badge: '360° + MULTI-ANGLE',
       tagline:
         'Pavé-set butterfly motif paired with a teardrop stone in warm 18k PVD gold over steel.',
-      cardImage: 'Butterfly Gold Ring on Emerald Velvet.png',
+      cardImage: 'Rotating Gold Butterfly Ring on Velvet.gif',
       angles: [
+        { file: 'Rotating Gold Butterfly Ring on Velvet.gif', label: '360° Rotation' },
         { file: 'Butterfly Gold Ring on Emerald Velvet.png', label: 'Front View' },
         { file: 'Pear Gemstone Butterfly Ring on Velvet.png', label: 'Pear Stone Angle' },
         { file: 'Golden Butterfly Teardrop Ring on Velvet.png', label: 'Side & Teardrop' },
@@ -202,8 +204,26 @@ export default function ZuviStore() {
         { file: 'Ornate Gold Ring on Emerald Velvet.png', label: 'Side Profile' },
       ],
     },
+    {
+      id: 'emerald-twin-band',
+      category: 'RINGS',
+      name: 'Emerald Twin-Stone Band',
+      price: 350,
+      originalPrice: 999,
+      badge: 'MULTI-ANGLE',
+      tagline:
+        'Clean gold band set with emerald-toned stones for effortless everyday styling.',
+      cardImage: 'Gold Ring on Forest Green Velvet-3.png',
+      angles: [
+        { file: 'Gold Ring on Forest Green Velvet-3.png', label: 'Forest Velvet' },
+        { file: 'ring1.jpeg', label: 'Angle 1' },
+        { file: 'ring2.jpeg', label: 'Angle 2' },
+        { file: 'ring3.jpeg', label: 'Angle 3' },
+        { file: 'ring4.jpeg', label: 'Angle 4' },
+      ],
+    },
 
-    // EARINGS (replace filenames with your earrings assets in public/images/)
+    // EARINGS (swap to dedicated earrings files in public/images/ when added)
     {
       id: 'emerald-drop-earrings',
       category: 'EARINGS',
@@ -233,7 +253,7 @@ export default function ZuviStore() {
       ],
     },
 
-    // JUMKA (replace filenames with your jumka assets in public/images/)
+    // JUMKA (swap to dedicated jumka files in public/images/ when added)
     {
       id: 'imperial-emerald-jumka',
       category: 'JUMKA',
@@ -263,7 +283,7 @@ export default function ZuviStore() {
       ],
     },
 
-    // BRACELTS (replace filenames with your bracelet assets in public/images/)
+    // BRACELTS (swap to dedicated bracelet files in public/images/ when added)
     {
       id: 'crossover-pave-bracelet',
       category: 'BRACELTS',
@@ -293,7 +313,7 @@ export default function ZuviStore() {
       ],
     },
 
-    // PENDANTS (replace filenames with your pendant assets in public/images/)
+    // PENDANTS (swap to dedicated pendant files in public/images/ when added)
     {
       id: 'teardrop-pave-pendant',
       category: 'PENDANTS',
@@ -673,7 +693,7 @@ export default function ZuviStore() {
 
                 {/* Clickable Ring Thumbnails to Switch Stage Preview */}
                 <div className="flex items-center gap-2 shrink-0 overflow-x-auto max-w-full">
-                  {ringCatalog.map((ring) => (
+                  {ringCatalog.slice(0, 6).map((ring) => (
                     <button
                       key={ring.id}
                       type="button"
