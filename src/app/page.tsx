@@ -1,20 +1,344 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useSpring,
+  useMotionTemplate,
+  AnimatePresence,
+} from 'framer-motion';
+
+interface WaterRipple {
+  id: number;
+  x: number;
+  y: number;
+}
+
+interface ProductAngle {
+  file: string;
+  label: string;
+}
+
+type CategoryName = 'RINGS' | 'EARINGS' | 'JUMKA' | 'BRACELTS' | 'PENDANTS';
+
+interface StoreProduct {
+  id: string;
+  category: CategoryName;
+  name: string;
+  price: number;
+  originalPrice: number;
+  badge: string;
+  tagline: string;
+  cardImage: string;
+  angles: ProductAngle[];
+}
 
 export default function ZuviStore() {
   const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const silkShift = useTransform(scrollYProgress, [0, 1], ['0%', '16%']);
 
-  // Real Product Photo Angles (public/images/ring1.jpeg - ring4.jpeg)
-  const ringAngles = [
-    { id: 'ring1.jpeg', label: 'Top View' },
-    { id: 'ring2.jpeg', label: 'Front Angle' },
-    { id: 'ring3.jpeg', label: 'Side Profile' },
-    { id: 'ring4.jpeg', label: 'Stone Detail' },
+  // Smooth Liquid Silk-Sea Cursor Sheen & Water Ripples (no striped lines)
+  const cursorX = useMotionValue(-500);
+  const cursorY = useMotionValue(-500);
+  const smoothX = useSpring(cursorX, { stiffness: 130, damping: 26, mass: 0.4 });
+  const smoothY = useSpring(cursorY, { stiffness: 130, damping: 26, mass: 0.4 });
+
+  const [ripples, setRipples] = useState<WaterRipple[]>([]);
+  const lastRippleTime = useRef<number>(0);
+
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      cursorX.set(e.clientX);
+      cursorY.set(e.clientY);
+
+      const now = Date.now();
+      if (now - lastRippleTime.current > 240) {
+        lastRippleTime.current = now;
+        const id = now + Math.random();
+        setRipples((prev) => [...prev.slice(-5), { id, x: e.clientX, y: e.clientY }]);
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, [cursorX, cursorY]);
+
+  const seaGlowBg = useMotionTemplate`radial-gradient(420px circle at ${smoothX}px ${smoothY}px, rgba(167, 243, 208, 0.24), rgba(52, 211, 153, 0.09) 45%, transparent 75%)`;
+
+  // Categories
+  const categories: CategoryName[] = ['RINGS', 'EARINGS', 'JUMKA', 'BRACELTS', 'PENDANTS'];
+  const [selectedCategory, setSelectedCategory] = useState<CategoryName>('RINGS');
+
+  // Full Store Catalog (update filenames as you add new assets to public/images/)
+  const catalogItems: StoreProduct[] = [
+    // RINGS
+    {
+      id: 'imperial-emerald',
+      category: 'RINGS',
+      name: 'Imperial Emerald Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: '360° PREVIEW',
+      tagline:
+        'Pear and baguette emerald stones in 18k PVD gold over stainless steel. Built for everyday wear.',
+      cardImage: '360 Gold Emerald Ring Rotation_2.gif',
+      angles: [
+        { file: '360 Gold Emerald Ring Rotation_2.gif', label: '360° Rotation' },
+        { file: 'Emerald-Set Gold Ring on Velvet.png', label: 'Front Stones' },
+        { file: 'Emerald and Gold Ring on Velvet.png', label: 'Side Profile' },
+        { file: 'Emerald Gold Ring on Velvet.png', label: 'Band & Prongs' },
+      ],
+    },
+    {
+      id: 'baguette-cluster',
+      category: 'RINGS',
+      name: 'Baguette Cluster Gold Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: '360° + MULTI-ANGLE',
+      tagline:
+        'Stepped twin baguette stone clusters framed with pave accents in durable 18k PVD gold.',
+      cardImage: 'Rotating Gold Diamond Ring Grid.gif',
+      angles: [
+        { file: 'Rotating Gold Diamond Ring Grid.gif', label: '360° Rotation' },
+        { file: 'Stepped Gold Baguette Ring on Green Velvet.png', label: 'Stepped Velvet' },
+        { file: 'Baguette Cluster Gold Ring.png', label: 'Studio Angle' },
+        { file: 'Gold Ring on Emerald Velvet.png', label: 'Prong Profile' },
+      ],
+    },
+    {
+      id: 'golden-double-wrap',
+      category: 'RINGS',
+      name: 'Golden Double-Wrap Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: 'NEW DROP',
+      tagline:
+        'Multi-row pavé spiral wrap accented with marquise and baguette stones in 18k PVD gold.',
+      cardImage: 'Golden Double-Wrap Ring on Green Velvet-1.png',
+      angles: [
+        { file: 'Golden Double-Wrap Ring on Green Velvet-1.png', label: 'Velvet Studio' },
+      ],
+    },
+    {
+      id: 'pave-crossover-cuff',
+      category: 'RINGS',
+      name: 'Pavé Crossover Cuff Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: 'MULTI-ANGLE',
+      tagline:
+        'Intertwined multi-band open cuff lined with pavé stones in 18k PVD gold over stainless steel.',
+      cardImage: 'Gold Pav Crossover Ring on Green Velvet.png',
+      angles: [
+        { file: 'Gold Pav Crossover Ring on Green Velvet.png', label: 'Velvet View' },
+        { file: 'Golden Diamond Cuff on Emerald Velvet.png', label: 'Cuff Angle' },
+        { file: 'Intertwined Gold Diamond Ring on Emerald Velvet.png', label: 'Open Weave' },
+      ],
+    },
+    {
+      id: 'woven-gold-open',
+      category: 'RINGS',
+      name: 'Woven Gold Open Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: '360° + ON HAND',
+      tagline:
+        'Multi-band crossover gold finish with an open adjustable fit and smooth 18k PVD shine.',
+      cardImage: 'Animated Gold Open Ring Rotation Grid.gif',
+      angles: [
+        { file: 'Animated Gold Open Ring Rotation Grid.gif', label: '360° Rotation' },
+        { file: 'Gold Multi-Band Ring on Emerald Velvet.png', label: '3-Angle Sheet' },
+        { file: 'Gold Crossover Ring on Green Satin.png', label: 'Worn Look' },
+      ],
+    },
+    {
+      id: 'butterfly-solitaire',
+      category: 'RINGS',
+      name: 'Butterfly Pavé Gold Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: 'MULTI-ANGLE',
+      tagline:
+        'Pavé-set butterfly motif paired with a teardrop stone in warm 18k PVD gold over steel.',
+      cardImage: 'Butterfly Gold Ring on Emerald Velvet.png',
+      angles: [
+        { file: 'Butterfly Gold Ring on Emerald Velvet.png', label: 'Front View' },
+        { file: 'Pear Gemstone Butterfly Ring on Velvet.png', label: 'Pear Stone Angle' },
+        { file: 'Golden Butterfly Teardrop Ring on Velvet.png', label: 'Side & Teardrop' },
+      ],
+    },
+    {
+      id: 'crown-leaf-solitaire',
+      category: 'RINGS',
+      name: 'Crown Leaf Solitaire Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: '360° + 4-VIEW',
+      tagline:
+        'Raised center stone above sculpted leaf and pavé rows with detailed gallery metalwork.',
+      cardImage: 'Rotating Gold Ring on Emerald Velvet (2).gif',
+      angles: [
+        { file: 'Rotating Gold Ring on Emerald Velvet (2).gif', label: '360° Rotation' },
+        { file: 'Four-View Gold Leaf Ring on Velvet.png', label: '4-View Sheet' },
+      ],
+    },
+    {
+      id: 'fan-cluster',
+      category: 'RINGS',
+      name: 'Fan Cluster Gold Ring',
+      price: 350,
+      originalPrice: 999,
+      badge: '360° + MULTI-ANGLE',
+      tagline:
+        'Dual fan-cut crystal clusters along a pavé-lined 18k PVD gold band.',
+      cardImage: 'Gold Fan-Cluster Ring Rotation (1).gif',
+      angles: [
+        { file: 'Gold Fan-Cluster Ring Rotation (1).gif', label: '360° Rotation' },
+        { file: 'Golden Sunburst Ring on Forest Velvet.png', label: 'Forest Velvet' },
+        { file: 'Ornate Gold Ring on Emerald Velvet.png', label: 'Side Profile' },
+      ],
+    },
+
+    // EARINGS (replace filenames with your earrings assets in public/images/)
+    {
+      id: 'emerald-drop-earrings',
+      category: 'EARINGS',
+      name: 'Emerald PVD Gold Drop Earrings',
+      price: 350,
+      originalPrice: 999,
+      badge: '18K PVD GOLD',
+      tagline:
+        'Lightweight anti-tarnish drop earrings in 18k PVD gold over stainless steel for daily wear.',
+      cardImage: 'Emerald-Set Gold Ring on Velvet.png',
+      angles: [
+        { file: 'Emerald-Set Gold Ring on Velvet.png', label: 'Studio Angle' },
+      ],
+    },
+    {
+      id: 'baguette-stud-earrings',
+      category: 'EARINGS',
+      name: 'Baguette Cluster Gold Studs',
+      price: 350,
+      originalPrice: 999,
+      badge: 'ANTI-TARNISH',
+      tagline:
+        'Crisp baguette-cut stone studs finished in durable vacuum-plated 18k gold.',
+      cardImage: 'Baguette Cluster Gold Ring.png',
+      angles: [
+        { file: 'Baguette Cluster Gold Ring.png', label: 'Studio Angle' },
+      ],
+    },
+
+    // JUMKA (replace filenames with your jumka assets in public/images/)
+    {
+      id: 'imperial-emerald-jumka',
+      category: 'JUMKA',
+      name: 'Imperial Emerald Gold Jumka',
+      price: 399,
+      originalPrice: 1199,
+      badge: 'CAMPUS EDITION',
+      tagline:
+        'Modern anti-tarnish jumka silhouette crafted in 18k PVD gold over stainless steel.',
+      cardImage: 'Emerald and Gold Ring on Velvet.png',
+      angles: [
+        { file: 'Emerald and Gold Ring on Velvet.png', label: 'Studio Angle' },
+      ],
+    },
+    {
+      id: 'sunburst-gold-jumka',
+      category: 'JUMKA',
+      name: 'Sunburst Motif Gold Jumka',
+      price: 399,
+      originalPrice: 1199,
+      badge: '18K PVD GOLD',
+      tagline:
+        'Detailed gold-tone jumka built to keep its shine without tarnishing or turning skin green.',
+      cardImage: 'Golden Sunburst Ring on Forest Velvet.png',
+      angles: [
+        { file: 'Golden Sunburst Ring on Forest Velvet.png', label: 'Studio Angle' },
+      ],
+    },
+
+    // BRACELTS (replace filenames with your bracelet assets in public/images/)
+    {
+      id: 'crossover-pave-bracelet',
+      category: 'BRACELTS',
+      name: 'Crossover Pavé Gold Bracelet',
+      price: 449,
+      originalPrice: 1299,
+      badge: '18K PVD GOLD',
+      tagline:
+        'Sleek anti-tarnish bracelet with pavé shimmer over a water-resistant steel core.',
+      cardImage: 'Gold Pav Crossover Ring on Green Velvet.png',
+      angles: [
+        { file: 'Gold Pav Crossover Ring on Green Velvet.png', label: 'Studio Angle' },
+      ],
+    },
+    {
+      id: 'woven-gold-bracelet',
+      category: 'BRACELTS',
+      name: 'Woven Multi-Band Gold Bracelet',
+      price: 449,
+      originalPrice: 1299,
+      badge: 'ANTI-TARNISH',
+      tagline:
+        'Layered gold-tone weave designed for effortless everyday stack or solo wear.',
+      cardImage: 'Gold Multi-Band Ring on Emerald Velvet.png',
+      angles: [
+        { file: 'Gold Multi-Band Ring on Emerald Velvet.png', label: 'Studio Angle' },
+      ],
+    },
+
+    // PENDANTS (replace filenames with your pendant assets in public/images/)
+    {
+      id: 'teardrop-pave-pendant',
+      category: 'PENDANTS',
+      name: 'Teardrop Pavé Gold Pendant',
+      price: 350,
+      originalPrice: 999,
+      badge: '18K PVD GOLD',
+      tagline:
+        'Everyday anti-tarnish pendant finished in rich 18k PVD gold over stainless steel.',
+      cardImage: 'Pear Gemstone Butterfly Ring on Velvet.png',
+      angles: [
+        { file: 'Pear Gemstone Butterfly Ring on Velvet.png', label: 'Studio Angle' },
+      ],
+    },
+    {
+      id: 'crown-leaf-pendant',
+      category: 'PENDANTS',
+      name: 'Crown Leaf Gold Pendant',
+      price: 350,
+      originalPrice: 999,
+      badge: 'ANTI-TARNISH',
+      tagline:
+        'Sculpted leaf and crystal pendant built to hold its finish through daily campus wear.',
+      cardImage: 'Four-View Gold Leaf Ring on Velvet.png',
+      angles: [
+        { file: 'Four-View Gold Leaf Ring on Velvet.png', label: 'Studio Angle' },
+      ],
+    },
   ];
-  const [currentRingIndex, setCurrentRingIndex] = useState(0);
+
+  const ringCatalog = catalogItems.filter((item) => item.category === 'RINGS');
+  const visibleCategoryItems = catalogItems.filter((item) => item.category === selectedCategory);
+
+  // Featured Hero Ring + Interactive Tilt & Multi-Angle Gallery State
+  const featuredRing = ringCatalog[0];
+  const [heroRingId, setHeroRingId] = useState<string>(featuredRing.id);
+  const activeHeroRing = ringCatalog.find((r) => r.id === heroRingId) ?? featuredRing;
+
+  const [tiltDeg, setTiltDeg] = useState(0);
+  const [gentleFloat, setGentleFloat] = useState(true);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [activeGalleryItem, setActiveGalleryItem] = useState<StoreProduct>(featuredRing);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const dragStartX = useRef<number | null>(null);
+  const startTilt = useRef<number>(0);
 
   // IMS Event Video Reels (public/videos/video1.mp4 - video3.mp4)
   const [activeVideo, setActiveVideo] = useState('video1.mp4');
@@ -22,28 +346,80 @@ export default function ZuviStore() {
 
   // Checkout State
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', address: '', pincode: '', city: '' });
+  const [selectedItem, setSelectedItem] = useState({
+    name: activeHeroRing.name,
+    price: activeHeroRing.price,
+    originalPrice: activeHeroRing.originalPrice,
+  });
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    pincode: '',
+    city: '',
+  });
   const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
   const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
 
-  const product = {
-    name: 'Imperial Emerald Ring',
-    price: 350,
-    originalPrice: 999,
-    tagline: 'Dual emerald stones in solid 18k vacuum-plated gold. Built for daily wear.',
+  const getImageUrl = (fileName: string) => encodeURI(`/images/${fileName}`);
+
+  const openItemGallery = (item: StoreProduct, index = 0) => {
+    setActiveGalleryItem(item);
+    setGalleryIndex(index);
+    setIsGalleryOpen(true);
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = (
+    item = {
+      name: activeHeroRing.name,
+      price: activeHeroRing.price,
+      originalPrice: activeHeroRing.originalPrice,
+    }
+  ) => {
+    setSelectedItem(item);
     setIsCheckoutOpen(true);
     setStep('form');
   };
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    setGentleFloat(false);
+    dragStartX.current = e.clientX;
+    startTilt.current = tiltDeg;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartX.current === null) return;
+    const deltaX = e.clientX - dragStartX.current;
+    const clamped = Math.max(-28, Math.min(28, startTilt.current + deltaX * 0.25));
+    setTiltDeg(clamped);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartX.current === null) return;
+    const movedDistance = Math.abs(e.clientX - dragStartX.current);
+    dragStartX.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    if (movedDistance < 6) {
+      openItemGallery(activeHeroRing, 0);
+    }
+  };
+
   const validateAndProceed = (e: React.FormEvent) => {
     e.preventDefault();
-    let newErrors: { phone?: string; pincode?: string } = {};
-    if (!/^\d{10}$/.test(formData.phone)) newErrors.phone = 'Please enter a valid 10-digit mobile number.';
-    if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = 'Please enter a valid 6-digit postal pincode.';
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    const newErrors: { phone?: string; pincode?: string } = {};
+    if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid 10-digit mobile number.';
+    }
+    if (!/^\d{6}$/.test(formData.pincode)) {
+      newErrors.pincode = 'Please enter a valid 6-digit postal pincode.';
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     setErrors({});
     setStep('qr');
   };
@@ -57,7 +433,7 @@ export default function ZuviStore() {
           access_key: 'YOUR_WEB3FORMS_ACCESS_KEY',
           subject: `New ZUVI Order from ${formData.name}`,
           from_name: 'ZUVI Store',
-          message: `Product: ${product.name} | Price: ₹${product.price} | Customer: ${formData.name} | Phone: ${formData.phone} | Address: ${formData.address}, ${formData.city} - ${formData.pincode}`
+          message: `Product: ${selectedItem.name} | Price: ₹${selectedItem.price} | Customer: ${formData.name} | Phone: ${formData.phone} | Address: ${formData.address}, ${formData.city} - ${formData.pincode}`,
         }),
       });
     } catch (err) {
@@ -67,206 +443,411 @@ export default function ZuviStore() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06090e] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden">
-      
-      {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-emerald-950/20 rounded-full blur-[140px] pointer-events-none" />
+    <div className="min-h-screen bg-[#0a1f16] text-[#ecfdf5] font-sans selection:bg-amber-400 selection:text-[#081a12] overflow-x-hidden relative">
+      {/* Smooth Dark Emerald Silk-Sea Background */}
+      <motion.div
+        style={{ y: silkShift }}
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none z-0"
+      >
+        <div
+          className="w-full h-[120vh] -top-[10vh] relative"
+          style={{
+            background: `
+              radial-gradient(ellipse 85% 55% at 20% 22%, rgba(45, 118, 84, 0.45) 0%, rgba(18, 56, 39, 0.32) 48%, transparent 76%),
+              radial-gradient(ellipse 80% 60% at 82% 35%, rgba(56, 138, 99, 0.35) 0%, rgba(14, 46, 32, 0.42) 52%, transparent 78%),
+              radial-gradient(ellipse 95% 65% at 50% 82%, rgba(28, 84, 59, 0.5) 0%, rgba(10, 32, 22, 0.85) 58%, #071710 100%),
+              linear-gradient(145deg, #0e2c1f 0%, #143b2a 38%, #0b2419 72%, #081a12 100%)
+            `,
+          }}
+        />
+        <motion.div
+          animate={{ x: ['-4%', '4%', '-4%'], rotate: [-1, 1.5, -1] }}
+          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-x-[-10%] top-[14%] h-64 rounded-full bg-emerald-400/10 blur-3xl"
+        />
+        <motion.div
+          animate={{ x: ['5%', '-5%', '5%'], rotate: [1.5, -1, 1.5] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute inset-x-[-10%] top-[54%] h-72 rounded-full bg-teal-300/10 blur-3xl"
+        />
+      </motion.div>
 
-      {/* Announcement Bar */}
-      <div className="bg-emerald-950/80 text-emerald-300 text-[11px] py-2 px-4 text-center tracking-widest font-mono uppercase border-b border-emerald-900/50 backdrop-blur-md relative z-50">
-        IMS Ghaziabad Event: 80+ Rings Sold in 2 Hours • Launch Price ₹350
+      {/* Smooth Cursor Sea Sheen & Water Ripples */}
+      <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+        <motion.div style={{ background: seaGlowBg }} className="absolute inset-0" />
+
+        <AnimatePresence>
+          {ripples.map((ripple) => (
+            <motion.span
+              key={ripple.id}
+              initial={{ opacity: 0.45, scale: 0.2 }}
+              animate={{ opacity: 0, scale: 2.3 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: 'easeOut' }}
+              onAnimationComplete={() =>
+                setRipples((prev) => prev.filter((item) => item.id !== ripple.id))
+              }
+              style={{
+                left: ripple.x - 60,
+                top: ripple.y - 60,
+              }}
+              className="w-[120px] h-[120px] rounded-full border border-emerald-200/35 shadow-[0_0_18px_rgba(110,231,183,0.2)] absolute"
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Navigation Header */}
-      <header className="border-b border-slate-900 bg-[#06090e]/80 backdrop-blur-xl sticky top-0 z-40">
+      <header className="border-b border-emerald-800/35 bg-[#0a1f16]/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-serif tracking-widest text-amber-400 font-bold">ZUVI</h1>
-            <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-slate-400 border border-slate-800 px-2.5 py-0.5 rounded-full font-mono">
-              Anti-Tarnish Jewelry
+            <h1 className="text-2xl font-serif tracking-widest text-amber-300 font-bold">ZUVI</h1>
+            <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-emerald-200/85 border border-emerald-700/50 px-2.5 py-0.5 rounded-full font-mono bg-emerald-950/60">
+              PREMIUM ANTI-TARNISH JEWELRY
             </span>
           </div>
 
           <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-wider text-slate-400 font-mono">
-              <a href="#inspector" className="hover:text-amber-400 transition">Ring Details</a>
-              <a href="#proof" className="hover:text-amber-400 transition">Why It Lasts</a>
-              <a href="#event" className="hover:text-amber-400 transition">IMS Event</a>
+            <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-wider text-emerald-100/75 font-mono">
+              <a href="#collections" className="hover:text-amber-300 transition">Collections</a>
+              <a href="#proof" className="hover:text-amber-300 transition">Why It Lasts</a>
+              <a href="#event" className="hover:text-amber-300 transition">IMS Event</a>
             </nav>
-            <button 
-              onClick={handleBuyNow}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2 rounded-lg transition text-xs font-mono"
+            <button
+              onClick={() =>
+                handleBuyNow({
+                  name: activeHeroRing.name,
+                  price: activeHeroRing.price,
+                  originalPrice: activeHeroRing.originalPrice,
+                })
+              }
+              className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold px-5 py-2 rounded-lg transition text-xs font-mono shadow-sm"
             >
-              Get Ring — ₹350
+              Order Now — ₹{activeHeroRing.price}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Natural Hero Section */}
-      <motion.section 
-        style={{ opacity: heroOpacity }}
-        className="relative pt-16 pb-12 px-6 text-center max-w-4xl mx-auto space-y-6"
-      >
-        <div className="inline-block bg-emerald-950/60 border border-emerald-800/60 px-3.5 py-1 rounded-full text-amber-400 text-[11px] font-mono">
-          Launch Price ₹350
-        </div>
-
-        <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tight leading-tight">
-          Jewelry you can wear every day <br className="hidden sm:inline" />
-          <span className="text-amber-400 italic font-normal">without worrying about fading.</span>
-        </h2>
-
-        <p className="text-slate-400 text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed">
-          No green marks. No color chipping when you sweat, wash your hands, or head to campus. Real 18k vacuum-gold made for daily life.
-        </p>
-
-        <div className="flex flex-wrap justify-center gap-4 pt-2">
-          <button 
-            onClick={handleBuyNow}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition text-sm font-mono shadow-lg shadow-amber-500/10"
-          >
-            Order Now — ₹350
-          </button>
-          <a 
-            href="#inspector"
-            className="border border-slate-800 hover:border-slate-600 text-slate-300 px-6 py-3.5 rounded-xl transition text-sm font-mono"
-          >
-            See Close-Ups
-          </a>
-        </div>
-      </motion.section>
-
-      {/* Product Image Inspector */}
-      <section id="inspector" className="max-w-5xl mx-auto px-6 py-12">
-        <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 md:p-10 shadow-xl backdrop-blur-md">
-          
-          <div className="flex flex-col md:flex-row items-center gap-10">
-            {/* Real Product Image Stage */}
-            <div className="w-full md:w-1/2 h-72 md:h-96 relative flex items-center justify-center p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80">
-              <motion.img 
-                key={ringAngles[currentRingIndex].id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.25 }}
-                src={`/images/${ringAngles[currentRingIndex].id}`} 
-                alt={ringAngles[currentRingIndex].label}
-                className="max-h-full max-w-full object-contain filter drop-shadow-xl"
-              />
+      {/* Editorial Hero + Floating Silk & Leaf Stage */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-10 pb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          {/* Left Editorial Column */}
+          <div className="lg:col-span-5 space-y-5">
+            <div className="inline-block bg-emerald-950/75 border border-emerald-700/50 px-3.5 py-1 rounded-full text-amber-300 text-[11px] font-mono backdrop-blur-sm">
+              Launch Price ₹{activeHeroRing.price} • {activeHeroRing.name}
             </div>
 
-            {/* Details & Angle Switcher */}
-            <div className="w-full md:w-1/2 space-y-6">
-              <div>
-                <span className="text-xs uppercase font-mono text-amber-400">Real Studio Photos</span>
-                <h3 className="text-2xl md:text-3xl font-serif text-white mt-1">{product.name}</h3>
-                <p className="text-slate-400 text-sm mt-2 leading-relaxed font-light">
-                  {product.tagline} Tested by students on campus during our live exhibition.
-                </p>
+            <h2 className="text-4xl md:text-5xl font-serif text-white tracking-tight leading-[1.12]">
+              Effortless Shine,{' '}
+              <span className="italic font-normal text-amber-300">
+                Made for Everyday Wear
+              </span>
+            </h2>
+
+            <p className="text-emerald-100/80 text-base leading-relaxed">
+              Crafted with 18k PVD gold plating over stainless steel. Water-resistant, skin-safe, and built to hold its rich finish wear after wear.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                onClick={() =>
+                  handleBuyNow({
+                    name: activeHeroRing.name,
+                    price: activeHeroRing.price,
+                    originalPrice: activeHeroRing.originalPrice,
+                  })
+                }
+                className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold px-7 py-3.5 rounded-xl transition text-sm font-mono shadow-lg shadow-amber-500/15"
+              >
+                Order Now — ₹{activeHeroRing.price}
+              </button>
+              <button
+                onClick={() => openItemGallery(activeHeroRing, 0)}
+                className="bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-100 border border-emerald-700/50 px-5 py-3.5 rounded-xl transition text-sm font-mono backdrop-blur-sm"
+              >
+                View All Angles
+              </button>
+            </div>
+
+            <div className="pt-3 border-t border-emerald-800/40 flex items-center justify-between text-xs font-mono text-emerald-200/80">
+              <span>
+                <strong className="text-xl font-serif text-amber-300">₹{activeHeroRing.price}</strong>{' '}
+                <span className="line-through text-emerald-400/50">₹{activeHeroRing.originalPrice}</span>
+              </span>
+              <span>Free delivery on campus</span>
+            </div>
+          </div>
+
+          {/* Right Arched Dark Silk & Botanical Floating Ring Stage */}
+          <div className="lg:col-span-7">
+            <div
+              className="relative rounded-t-[180px] rounded-b-3xl p-5 md:p-7 border border-emerald-600/35 shadow-[0_24px_60px_rgba(3,12,8,0.55)] overflow-hidden"
+              style={{
+                background:
+                  'linear-gradient(160deg, rgba(25, 74, 53, 0.72) 0%, rgba(14, 46, 32, 0.82) 52%, rgba(9, 30, 21, 0.92) 100%)',
+              }}
+            >
+              {/* Decorative Botanical Leaves */}
+              <svg
+                viewBox="0 0 240 240"
+                aria-hidden="true"
+                className="w-40 h-40 text-emerald-300/15 absolute -top-4 -right-4 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M40 190 C70 120, 140 60, 215 25" />
+                <path d="M85 135 C55 115, 45 85, 65 65 C85 85, 95 110, 85 135 Z" />
+                <path d="M125 95 C115 65, 130 40, 155 45 C155 70, 140 88, 125 95 Z" />
+                <path d="M155 70 C175 75, 195 65, 200 45 C180 45, 162 55, 155 70 Z" />
+              </svg>
+
+              {/* Floating Silk Stage */}
+              <div
+                className="relative h-80 md:h-[420px] rounded-2xl bg-[#071811]/65 backdrop-blur-md border border-emerald-600/30 flex flex-col items-center justify-center p-6 cursor-grab active:cursor-grabbing select-none overflow-hidden"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              >
+                <motion.div
+                  animate={{ x: [-12, 12, -12], scale: [1, 1.04, 1] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-64 h-24 rounded-full bg-gradient-to-r from-emerald-500/20 via-amber-300/20 to-emerald-400/20 blur-xl absolute bottom-8 pointer-events-none"
+                />
+
+                <motion.div
+                  animate={
+                    gentleFloat
+                      ? { y: [-7, 7, -7], rotate: tiltDeg }
+                      : { y: 0, rotate: tiltDeg }
+                  }
+                  transition={
+                    gentleFloat
+                      ? {
+                          y: { duration: 4.2, repeat: Infinity, ease: 'easeInOut' },
+                          rotate: { type: 'spring', stiffness: 180, damping: 22 },
+                        }
+                      : { type: 'spring', stiffness: 180, damping: 22 }
+                  }
+                  className="relative z-10 flex flex-col items-center justify-center"
+                >
+                  <img
+                    src={getImageUrl(activeHeroRing.cardImage)}
+                    alt={`${activeHeroRing.name} showcase`}
+                    className="max-h-56 md:max-h-64 w-auto object-contain rounded-2xl drop-shadow-[0_18px_32px_rgba(0,0,0,0.65)]"
+                  />
+                </motion.div>
+
+                <div className="mt-4 z-10 text-center space-y-1">
+                  <span className="inline-block text-[11px] font-mono bg-emerald-950/90 border border-emerald-600/40 text-emerald-100 px-3 py-1 rounded-full">
+                    Drag to tilt • Click ring for angle views
+                  </span>
+                </div>
               </div>
 
-              {/* Angle Selector */}
-              <div className="space-y-2">
-                <span className="text-[11px] uppercase font-mono text-slate-500">Select Angle:</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {ringAngles.map((angle, idx) => (
+              {/* Controls Bar: Tilt Slider, Float Toggle & Ring Thumbnails */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#081b13]/80 backdrop-blur-md border border-emerald-700/35 rounded-2xl px-4 py-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setGentleFloat((prev) => !prev)}
+                    className="text-[11px] font-mono px-3 py-1.5 rounded-lg bg-amber-400 text-[#081a12] font-bold shrink-0"
+                  >
+                    {gentleFloat ? 'Steady View' : 'Float Motion'}
+                  </button>
+                  <input
+                    type="range"
+                    min={-28}
+                    max={28}
+                    value={Math.round(tiltDeg)}
+                    onChange={(e) => {
+                      setGentleFloat(false);
+                      setTiltDeg(Number(e.target.value));
+                    }}
+                    aria-label="Tilt ring angle"
+                    className="w-full accent-amber-400 cursor-pointer"
+                  />
+                </div>
+
+                {/* Clickable Ring Thumbnails to Switch Stage Preview */}
+                <div className="flex items-center gap-2 shrink-0 overflow-x-auto max-w-full">
+                  {ringCatalog.map((ring) => (
                     <button
-                      key={angle.id}
-                      onClick={() => setCurrentRingIndex(idx)}
-                      className={`px-3 py-2.5 rounded-lg border text-xs font-mono text-left transition ${
-                        currentRingIndex === idx 
-                          ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold' 
-                          : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                      key={ring.id}
+                      type="button"
+                      onClick={() => setHeroRingId(ring.id)}
+                      title={`Preview ${ring.name}`}
+                      className={`w-10 h-10 rounded-lg overflow-hidden border bg-[#0b2218] hover:scale-105 transition shrink-0 ${
+                        activeHeroRing.id === ring.id
+                          ? 'border-amber-300 ring-2 ring-amber-300/40'
+                          : 'border-emerald-600/40'
                       }`}
                     >
-                      {angle.label}
+                      <img
+                        src={getImageUrl(ring.cardImage)}
+                        alt={ring.name}
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-serif text-amber-400 font-bold">₹{product.price}</span>
-                    <span className="text-sm text-slate-500 line-through">₹{product.originalPrice}</span>
-                  </div>
-                  <span className="text-[11px] text-emerald-400 font-mono">Free delivery on campus</span>
+      {/* Jewelry Categories Section (RINGS, EARINGS, JUMKA, BRACELTS, PENDANTS) */}
+      <section id="collections" className="relative z-10 max-w-6xl mx-auto px-6 py-12">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <span className="text-[11px] font-mono uppercase tracking-widest text-amber-300">
+              Shop By Category
+            </span>
+            <h3 className="text-3xl font-serif text-white mt-1">ZUVI Collections</h3>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 rounded-full text-xs font-mono tracking-wider transition border ${
+                  selectedCategory === cat
+                    ? 'bg-amber-400 text-[#081a12] border-amber-300 font-bold shadow-md'
+                    : 'bg-[#0e2a1e]/80 text-emerald-100/80 border-emerald-700/40 hover:border-amber-300/50 hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {visibleCategoryItems.map((item) => (
+            <div
+              key={item.id}
+              className="bg-[#0e2a1e]/75 backdrop-blur-md border border-emerald-700/40 rounded-3xl p-5 flex flex-col justify-between shadow-xl group"
+            >
+              <div>
+                <div
+                  onClick={() => openItemGallery(item, 0)}
+                  className="h-60 rounded-2xl bg-[#071811] border border-emerald-800/50 overflow-hidden flex items-center justify-center p-4 cursor-pointer relative"
+                >
+                  <img
+                    src={getImageUrl(item.cardImage)}
+                    alt={item.name}
+                    className="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition duration-300"
+                  />
+                  <span className="absolute bottom-3 right-3 text-[10px] font-mono bg-[#0a1f16]/90 text-amber-300 border border-emerald-700/40 px-2.5 py-1 rounded-full">
+                    {item.angles.length > 1
+                      ? `${item.angles.length} angles`
+                      : 'Inspect view'}
+                  </span>
                 </div>
-                <button 
-                  onClick={handleBuyNow}
-                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition text-xs font-mono"
+
+                <div className="mt-4 space-y-1.5">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-300/75">
+                    {item.category} • {item.badge}
+                  </span>
+                  <h4 className="text-xl font-serif text-white">{item.name}</h4>
+                  <p className="text-xs text-emerald-100/75 leading-relaxed">{item.tagline}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-emerald-800/40 flex items-center justify-between">
+                <div>
+                  <span className="text-2xl font-serif text-amber-300 font-bold">
+                    ₹{item.price}
+                  </span>{' '}
+                  <span className="text-xs line-through text-emerald-400/50">
+                    ₹{item.originalPrice}
+                  </span>
+                </div>
+                <button
+                  onClick={() =>
+                    handleBuyNow({
+                      name: item.name,
+                      price: item.price,
+                      originalPrice: item.originalPrice,
+                    })
+                  }
+                  className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold px-4 py-2 rounded-xl text-xs font-mono transition"
                 >
                   Buy Now
                 </button>
               </div>
             </div>
-          </div>
-
+          ))}
         </div>
       </section>
 
       {/* Humanized Feature Section */}
-      <section id="proof" className="max-w-5xl mx-auto px-6 py-16">
+      <section id="proof" className="relative z-10 max-w-5xl mx-auto px-6 py-14">
         <div className="text-center mb-10">
-          <h3 className="text-3xl font-serif text-white">Why this ring won't turn your finger green</h3>
+          <h3 className="text-3xl font-serif text-white">
+            Why ZUVI jewelry won&apos;t turn your skin green
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-            <h4 className="text-xl font-serif text-white">Real gold that stays</h4>
-            <p className="text-slate-400 text-sm font-light leading-relaxed">
-              Most cheap rings use thin plating that starts peeling in a few days. We use vacuum plating so the 18k gold actually sticks and doesn’t wear off easily.
+          <div className="bg-[#0e2a1e]/65 backdrop-blur-md border border-emerald-700/35 rounded-2xl p-6 space-y-3 shadow-lg">
+            <h4 className="text-xl font-serif text-amber-300">Anti-tarnish finish that lasts</h4>
+            <p className="text-emerald-100/80 text-sm leading-relaxed">
+              Most cheap pieces use thin plating that fades fast. Vacuum 18k PVD gold plating bonds over stainless steel so the color holds up over time.
             </p>
           </div>
 
-          <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-            <h4 className="text-xl font-serif text-white">No need to remove it</h4>
-            <p className="text-slate-400 text-sm font-light leading-relaxed">
-              Wash your hands, go to the gym, get caught in rain — you can keep it on. It’s made for daily use.
+          <div className="bg-[#0e2a1e]/65 backdrop-blur-md border border-emerald-700/35 rounded-2xl p-6 space-y-3 shadow-lg">
+            <h4 className="text-xl font-serif text-amber-300">No need to remove it</h4>
+            <p className="text-emerald-100/80 text-sm leading-relaxed">
+              Wash your hands, go to the gym, get caught in rain — you can keep it on. It&apos;s made for daily use.
             </p>
           </div>
 
-          <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 space-y-3">
-            <h4 className="text-xl font-serif text-white">Stones that don’t fall out</h4>
-            <p className="text-slate-400 text-sm font-light leading-relaxed">
-              The emeralds are held with proper prongs, not just glued. They’re much less likely to come loose.
+          <div className="bg-[#0e2a1e]/65 backdrop-blur-md border border-emerald-700/35 rounded-2xl p-6 space-y-3 shadow-lg">
+            <h4 className="text-xl font-serif text-amber-300">Built for everyday wear</h4>
+            <p className="text-emerald-100/80 text-sm leading-relaxed">
+              Secure stone settings and sturdy stainless steel bases keep every piece ready for daily campus and lifestyle wear.
             </p>
           </div>
         </div>
 
-        {/* Casual Grounding Summary Line */}
         <div className="text-center mt-8">
-          <p className="text-slate-500 text-xs font-mono italic">Basically, it’s built to survive real student life.</p>
+          <p className="text-emerald-200/65 text-xs font-mono italic">
+            Basically, it&apos;s built to survive real student life.
+          </p>
         </div>
       </section>
 
       {/* Authentic IMS Ghaziabad Offline Event Section */}
-      <section id="event" className="max-w-5xl mx-auto px-6 py-16">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 md:p-10 shadow-xl backdrop-blur-md">
+      <section id="event" className="relative z-10 max-w-5xl mx-auto px-6 py-14">
+        <div className="bg-[#0e2a1e]/75 border border-emerald-700/40 rounded-3xl p-6 md:p-10 shadow-2xl backdrop-blur-md">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            
             <div className="space-y-5">
-              <span className="bg-amber-500/20 text-amber-400 text-[11px] font-mono px-3 py-1 rounded-full border border-amber-500/30">
+              <span className="bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[11px] font-mono px-3 py-1 rounded-full">
                 REAL EVENT PROOF
               </span>
-              <h3 className="text-3xl font-serif text-white">IMS Ghaziabad Event</h3>
-              <p className="text-slate-300 text-sm leading-relaxed font-light">
-                We brought ZUVI directly to students at our IMS Ghaziabad campus exhibition. Over 80+ rings were picked up live on the spot within 2 hours.
+              <h3 className="text-3xl font-serif text-white">IMS Ghaziabad Offline Event</h3>
+              <p className="text-emerald-100/80 text-sm leading-relaxed">
+                We brought ZUVI directly to students at our IMS Ghaziabad offline event. Over 80+ rings were picked up live on the spot within 2 hours.
               </p>
 
-              <div className="flex gap-4 font-mono text-xs text-slate-400 pt-2">
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  <span className="text-amber-400 font-bold text-base block">80+ Sold</span>
+              <div className="flex gap-4 font-mono text-xs text-emerald-100/80 pt-2">
+                <div className="bg-[#081a12] p-3 rounded-xl border border-emerald-800/50">
+                  <span className="text-amber-300 font-bold text-base block">80+ Sold</span>
                   In 120 Minutes
                 </div>
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  <span className="text-amber-400 font-bold text-base block">Live Try-Ons</span>
+                <div className="bg-[#081a12] p-3 rounded-xl border border-emerald-800/50">
+                  <span className="text-amber-300 font-bold text-base block">Live Try-Ons</span>
                   Instant UPI
                 </div>
               </div>
 
-              {/* Reel Triggers */}
               <div className="space-y-2 pt-2">
                 {[
                   { title: 'IMS Event Highlights', file: 'video1.mp4' },
@@ -275,23 +856,25 @@ export default function ZuviStore() {
                 ].map((vid) => (
                   <button
                     key={vid.file}
-                    onClick={() => { setActiveVideo(vid.file); setIsVideoModalOpen(true); }}
+                    onClick={() => {
+                      setActiveVideo(vid.file);
+                      setIsVideoModalOpen(true);
+                    }}
                     className={`w-full flex items-center justify-between p-3 rounded-xl border text-xs font-mono text-left transition ${
-                      activeVideo === vid.file 
-                        ? 'bg-emerald-950/40 border-amber-400 text-white' 
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      activeVideo === vid.file
+                        ? 'bg-emerald-900/70 border-amber-300 text-white'
+                        : 'bg-[#081a12]/85 border-emerald-800/50 text-emerald-200/80 hover:text-white'
                     }`}
                   >
                     <span>▶ {vid.title}</span>
-                    <span className="text-amber-400">Play Reel</span>
+                    <span className="text-amber-300">Play Reel</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Embedded Video Box */}
-            <div className="h-80 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 relative flex items-center justify-center">
-              <video 
+            <div className="h-80 bg-[#06140e] rounded-2xl overflow-hidden border border-emerald-800/50 relative flex items-center justify-center">
+              <video
                 key={activeVideo}
                 controls
                 autoPlay
@@ -303,22 +886,115 @@ export default function ZuviStore() {
                 Your browser does not support video.
               </video>
             </div>
-
           </div>
         </div>
       </section>
 
+      {/* Multi-Angle Photo Inspector Modal */}
+      <AnimatePresence>
+        {isGalleryOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            onClick={() => setIsGalleryOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl bg-[#0e2a1e] text-white rounded-3xl p-6 md:p-8 border border-emerald-700/50 shadow-2xl relative space-y-5"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-mono uppercase text-amber-300">
+                    Studio &amp; Angle Inspector
+                  </span>
+                  <h4 className="text-2xl font-serif font-bold">
+                    {activeGalleryItem.name} —{' '}
+                    {activeGalleryItem.angles[galleryIndex]?.label ?? 'Preview'}
+                  </h4>
+                </div>
+                <button
+                  onClick={() => setIsGalleryOpen(false)}
+                  className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/50 text-white flex items-center justify-center text-sm hover:bg-amber-400 hover:text-[#081a12] transition"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="h-72 md:h-96 bg-[#071811] rounded-2xl border border-emerald-800/50 flex items-center justify-center p-4 overflow-hidden">
+                <img
+                  src={getImageUrl(
+                    activeGalleryItem.angles[galleryIndex]?.file ?? activeGalleryItem.cardImage
+                  )}
+                  alt={`${activeGalleryItem.name} view`}
+                  className="max-h-full max-w-full object-contain rounded-xl"
+                />
+              </div>
+
+              {activeGalleryItem.angles.length > 1 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {activeGalleryItem.angles.map((angle, idx) => (
+                    <button
+                      key={`${angle.file}-${idx}`}
+                      onClick={() => setGalleryIndex(idx)}
+                      className={`p-2 rounded-xl border text-center transition ${
+                        galleryIndex === idx
+                          ? 'bg-amber-400 text-[#081a12] border-amber-300 font-bold'
+                          : 'bg-[#081a12] text-emerald-100 border-emerald-800/50 hover:border-amber-300/50'
+                      }`}
+                    >
+                      <img
+                        src={getImageUrl(angle.file)}
+                        alt={angle.label}
+                        className="w-full h-12 object-cover rounded-lg mb-1"
+                      />
+                      <span className="text-[10px] font-mono block truncate">{angle.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="font-mono text-sm font-bold text-amber-300">
+                  ₹{activeGalleryItem.price}{' '}
+                  <span className="line-through text-xs text-emerald-400/50">
+                    ₹{activeGalleryItem.originalPrice}
+                  </span>
+                </span>
+                <button
+                  onClick={() => {
+                    setIsGalleryOpen(false);
+                    handleBuyNow({
+                      name: activeGalleryItem.name,
+                      price: activeGalleryItem.price,
+                      originalPrice: activeGalleryItem.originalPrice,
+                    });
+                  }}
+                  className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-mono text-xs uppercase px-6 py-3 rounded-xl font-bold transition"
+                >
+                  Order Now — ₹{activeGalleryItem.price}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Fullscreen Video Modal */}
       {isVideoModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-3xl bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
-            <button 
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-3xl bg-[#0e261b] rounded-2xl overflow-hidden border border-emerald-700/40 shadow-2xl">
+            <button
               onClick={() => setIsVideoModalOpen(false)}
-              className="absolute top-4 right-4 text-white text-lg bg-slate-950/80 w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-950 transition"
+              className="absolute top-4 right-4 text-white text-lg bg-black/60 w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-400 hover:text-[#081a12] transition z-10"
             >
               ✕
             </button>
-            <div className="aspect-video w-full bg-slate-950 flex items-center justify-center">
+            <div className="aspect-video w-full bg-black flex items-center justify-center">
               <video controls autoPlay className="w-full h-full object-contain">
                 <source src={`/videos/${activeVideo}`} type="video/mp4" />
               </video>
@@ -329,106 +1005,129 @@ export default function ZuviStore() {
 
       {/* Checkout Modal */}
       {isCheckoutOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl relative my-8">
-            <button 
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0e2a1e] text-white border border-emerald-700/50 w-full max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl relative my-8">
+            <button
               onClick={() => setIsCheckoutOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg"
+              className="absolute top-4 right-4 text-emerald-200 hover:text-white text-lg"
             >
               ✕
             </button>
 
             {step === 'form' && (
               <form onSubmit={validateAndProceed} className="space-y-4">
-                <h3 className="text-2xl font-serif text-amber-400 mb-1">Enter Shipping Details</h3>
-                <p className="text-xs text-slate-400 mb-4">Item: <span className="text-white font-medium">{product.name}</span> — <span className="text-amber-400 font-bold">₹{product.price}</span></p>
+                <h3 className="text-2xl font-serif text-amber-300 font-bold mb-1">
+                  Enter Shipping Details
+                </h3>
+                <p className="text-xs text-emerald-100/75 mb-4">
+                  Item: <span className="font-semibold text-white">{selectedItem.name}</span> —{' '}
+                  <span className="font-bold text-amber-300">₹{selectedItem.price}</span>
+                </p>
 
                 <div>
-                  <label className="block text-xs uppercase font-mono text-slate-400 mb-1">Full Name</label>
-                  <input 
-                    type="text" 
-                    required 
+                  <label className="block text-xs uppercase font-mono text-emerald-200/80 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400"
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-[#071811] border border-emerald-800/60 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-300"
                     placeholder="Chitranjan Vikram Singh"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs uppercase font-mono text-slate-400 mb-1">Mobile Number</label>
-                  <input 
-                    type="tel" 
-                    required 
+                  <label className="block text-xs uppercase font-mono text-emerald-200/80 mb-1">
+                    Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    required
                     maxLength={10}
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400"
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full bg-[#071811] border border-emerald-800/60 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-300"
                     placeholder="9876543210"
                   />
                   {errors.phone && <p className="text-rose-400 text-xs mt-1">{errors.phone}</p>}
                 </div>
 
                 <div>
-                  <label className="block text-xs uppercase font-mono text-slate-400 mb-1">Delivery Address</label>
-                  <textarea 
-                    required 
+                  <label className="block text-xs uppercase font-mono text-emerald-200/80 mb-1">
+                    Delivery Address
+                  </label>
+                  <textarea
+                    required
                     rows={2}
                     value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400 resize-none"
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full bg-[#071811] border border-emerald-800/60 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-300 resize-none"
                     placeholder="Hostel Room / Street Address"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs uppercase font-mono text-slate-400 mb-1">City</label>
-                    <input 
-                      type="text" 
-                      required 
+                    <label className="block text-xs uppercase font-mono text-emerald-200/80 mb-1">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      required
                       value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400"
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full bg-[#071811] border border-emerald-800/60 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-300"
                       placeholder="Ghaziabad"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs uppercase font-mono text-slate-400 mb-1">Pincode</label>
-                    <input 
-                      type="text" 
-                      required 
+                    <label className="block text-xs uppercase font-mono text-emerald-200/80 mb-1">
+                      Pincode
+                    </label>
+                    <input
+                      type="text"
+                      required
                       maxLength={6}
                       value={formData.pincode}
-                      onChange={(e) => setFormData({...formData, pincode: e.target.value})}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400"
+                      onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                      className="w-full bg-[#071811] border border-emerald-800/60 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-300"
                       placeholder="201009"
                     />
                     {errors.pincode && <p className="text-rose-400 text-xs mt-1">{errors.pincode}</p>}
                   </div>
                 </div>
 
-                <button 
+                <button
                   type="submit"
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3.5 rounded-xl transition mt-4 font-mono text-xs uppercase tracking-wider"
+                  className="w-full bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold py-3.5 rounded-xl transition mt-4 font-mono text-xs uppercase tracking-wider"
                 >
-                  Pay via UPI (₹350)
+                  Pay via UPI (₹{selectedItem.price})
                 </button>
               </form>
             )}
 
             {step === 'qr' && (
               <div className="text-center space-y-6 py-2">
-                <h3 className="text-2xl font-serif text-amber-400">Scan & Pay ₹{product.price}</h3>
-                <p className="text-xs text-slate-400 font-mono">Use Google Pay, PhonePe, Paytm, or BHIM</p>
-                
-                <div className="bg-white p-4 rounded-2xl w-56 h-56 mx-auto flex items-center justify-center border-4 border-amber-500/20 shadow-xl">
-                  <img src="/images/qr.png" alt="UPI QR Code" className="w-full h-full object-contain" />
+                <h3 className="text-2xl font-serif text-amber-300 font-bold">
+                  Scan & Pay ₹{selectedItem.price}
+                </h3>
+                <p className="text-xs text-emerald-200/80 font-mono">
+                  Use Google Pay, PhonePe, Paytm, or BHIM
+                </p>
+
+                <div className="bg-white p-4 rounded-2xl w-56 h-56 mx-auto flex items-center justify-center border-2 border-amber-300/40 shadow-md">
+                  <img
+                    src="/images/qr.png"
+                    alt="UPI QR Code"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
 
-                <button 
+                <button
                   onClick={handlePaymentConfirmed}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition font-mono text-xs uppercase tracking-wider"
+                  className="w-full bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold py-3.5 rounded-xl transition font-mono text-xs uppercase tracking-wider"
                 >
                   I Have Completed Payment
                 </button>
@@ -437,16 +1136,16 @@ export default function ZuviStore() {
 
             {step === 'success' && (
               <div className="text-center space-y-6 py-6">
-                <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                <div className="w-14 h-14 bg-amber-400 text-[#081a12] font-bold rounded-full flex items-center justify-center mx-auto text-xl">
                   ✓
                 </div>
-                <h3 className="text-2xl font-serif text-white">Order Confirmed!</h3>
-                <p className="text-slate-400 text-sm max-w-sm mx-auto font-light">
-                  Thanks for ordering from ZUVI! We've recorded your order details and will dispatch it shortly.
+                <h3 className="text-2xl font-serif text-white font-bold">Order Confirmed!</h3>
+                <p className="text-emerald-100/80 text-sm max-w-sm mx-auto">
+                  Thanks for ordering from ZUVI! We&apos;ve recorded your order details and will dispatch it shortly.
                 </p>
-                <button 
+                <button
                   onClick={() => setIsCheckoutOpen(false)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs uppercase px-6 py-2.5 rounded-xl transition"
+                  className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold font-mono text-xs uppercase px-6 py-2.5 rounded-xl transition"
                 >
                   Back to Store
                 </button>
@@ -457,11 +1156,13 @@ export default function ZuviStore() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-[#06090e] py-12">
-        <div className="max-w-6xl mx-auto px-6 text-center text-slate-500 text-xs font-mono space-y-3">
-          <p className="font-serif text-amber-400 tracking-widest text-base font-bold">ZUVI JEWELRY</p>
-          <p className="text-slate-400 font-light">Anti-tarnish jewelry designed for daily campus & lifestyle wear.</p>
-          <p className="pt-2 text-slate-600">© 2026 ZUVI. All rights reserved.</p>
+      <footer className="relative z-10 border-t border-emerald-800/40 bg-[#071811]/90 backdrop-blur-md py-12">
+        <div className="max-w-6xl mx-auto px-6 text-center text-emerald-200/70 text-xs font-mono space-y-3">
+          <p className="font-serif text-amber-300 tracking-widest text-base font-bold">
+            ZUVI JEWELRY
+          </p>
+          <p>Anti-tarnish jewelry designed for daily campus &amp; lifestyle wear.</p>
+          <p className="pt-2 text-emerald-400/50">© 2026 ZUVI. All rights reserved.</p>
         </div>
       </footer>
     </div>
