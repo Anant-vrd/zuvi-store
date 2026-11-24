@@ -10,6 +10,20 @@ import {
   useMotionTemplate,
   AnimatePresence,
 } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
+import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { auth, googleProvider, db } from '@/lib/firebase';
 
 interface WaterRipple {
   id: number;
@@ -36,11 +50,25 @@ interface StoreProduct {
   angles: ProductAngle[];
 }
 
+interface OrderRecord {
+  id: string;
+  productName: string;
+  price: number;
+  utrNumber: string;
+  status: string;
+  city: string;
+  pincode: string;
+  createdAt?: { seconds?: number };
+}
+
+const UPI_ID = 'anantpratap.h7164@ptyes';
+const MERCHANT_NAME = 'ZUVI Jewelry';
+
 export default function ZuviStore() {
   const { scrollYProgress } = useScroll();
   const silkShift = useTransform(scrollYProgress, [0, 1], ['0%', '16%']);
 
-  // Smooth Liquid Silk-Sea Cursor Sheen & Water Ripples (no striped lines)
+  // Smooth Liquid Silk-Sea Cursor Sheen & Water Ripples
   const cursorX = useMotionValue(-500);
   const cursorY = useMotionValue(-500);
   const smoothX = useSpring(cursorX, { stiffness: 130, damping: 26, mass: 0.4 });
@@ -68,13 +96,95 @@ export default function ZuviStore() {
 
   const seaGlowBg = useMotionTemplate`radial-gradient(420px circle at ${smoothX}px ${smoothY}px, rgba(167, 243, 208, 0.24), rgba(52, 211, 153, 0.09) 45%, transparent 75%)`;
 
+  // Auth & User Profile / Orders State
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  const [userOrders, setUserOrders] = useState<OrderRecord[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    pincode: '',
+    city: '',
+  });
+
+  const fetchUserOrders = async (uid: string) => {
+    setLoadingOrders(true);
+    try {
+      const q = query(collection(db, 'orders'), where('userId', '==', uid));
+      const snap = await getDocs(q);
+      const list: OrderRecord[] = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<OrderRecord, 'id'>),
+      }));
+      list.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+      setUserOrders(list);
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+
+      if (currentUser) {
+        try {
+          const profileRef = doc(db, 'users', currentUser.uid);
+          const profileSnap = await getDoc(profileRef);
+          if (profileSnap.exists()) {
+            const saved = profileSnap.data();
+            setFormData((prev) => ({
+              name: saved.name || currentUser.displayName || prev.name,
+              phone: saved.phone || prev.phone,
+              address: saved.address || prev.address,
+              city: saved.city || prev.city,
+              pincode: saved.pincode || prev.pincode,
+            }));
+          } else if (currentUser.displayName) {
+            setFormData((prev) => ({ ...prev, name: currentUser.displayName || prev.name }));
+          }
+          await fetchUserOrders(currentUser.uid);
+        } catch (err) {
+          console.error('Profile load error:', err);
+        }
+      } else {
+        setUserOrders([]);
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.error('Google sign-in failed:', err);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setIsOrdersOpen(false);
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
   // Categories
   const categories: CategoryName[] = ['RINGS', 'EARINGS', 'JUMKA', 'BRACELTS', 'PENDANTS'];
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>('RINGS');
 
   // Full Store Catalog matched to public/images/
   const catalogItems: StoreProduct[] = [
-    // RINGS
     {
       id: 'imperial-emerald',
       category: 'RINGS',
@@ -222,8 +332,6 @@ export default function ZuviStore() {
         { file: 'ring4.jpeg', label: 'Angle 4' },
       ],
     },
-
-    // EARINGS (swap to dedicated earrings files in public/images/ when added)
     {
       id: 'emerald-drop-earrings',
       category: 'EARINGS',
@@ -234,9 +342,7 @@ export default function ZuviStore() {
       tagline:
         'Lightweight anti-tarnish drop earrings in 18k PVD gold over stainless steel for daily wear.',
       cardImage: 'Emerald-Set Gold Ring on Velvet.png',
-      angles: [
-        { file: 'Emerald-Set Gold Ring on Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Emerald-Set Gold Ring on Velvet.png', label: 'Studio Angle' }],
     },
     {
       id: 'baguette-stud-earrings',
@@ -248,12 +354,8 @@ export default function ZuviStore() {
       tagline:
         'Crisp baguette-cut stone studs finished in durable vacuum-plated 18k gold.',
       cardImage: 'Baguette Cluster Gold Ring.png',
-      angles: [
-        { file: 'Baguette Cluster Gold Ring.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Baguette Cluster Gold Ring.png', label: 'Studio Angle' }],
     },
-
-    // JUMKA (swap to dedicated jumka files in public/images/ when added)
     {
       id: 'imperial-emerald-jumka',
       category: 'JUMKA',
@@ -264,9 +366,7 @@ export default function ZuviStore() {
       tagline:
         'Modern anti-tarnish jumka silhouette crafted in 18k PVD gold over stainless steel.',
       cardImage: 'Emerald and Gold Ring on Velvet.png',
-      angles: [
-        { file: 'Emerald and Gold Ring on Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Emerald and Gold Ring on Velvet.png', label: 'Studio Angle' }],
     },
     {
       id: 'sunburst-gold-jumka',
@@ -278,12 +378,8 @@ export default function ZuviStore() {
       tagline:
         'Detailed gold-tone jumka built to keep its shine without tarnishing or turning skin green.',
       cardImage: 'Golden Sunburst Ring on Forest Velvet.png',
-      angles: [
-        { file: 'Golden Sunburst Ring on Forest Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Golden Sunburst Ring on Forest Velvet.png', label: 'Studio Angle' }],
     },
-
-    // BRACELTS (swap to dedicated bracelet files in public/images/ when added)
     {
       id: 'crossover-pave-bracelet',
       category: 'BRACELTS',
@@ -294,9 +390,7 @@ export default function ZuviStore() {
       tagline:
         'Sleek anti-tarnish bracelet with pavé shimmer over a water-resistant steel core.',
       cardImage: 'Gold Pav Crossover Ring on Green Velvet.png',
-      angles: [
-        { file: 'Gold Pav Crossover Ring on Green Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Gold Pav Crossover Ring on Green Velvet.png', label: 'Studio Angle' }],
     },
     {
       id: 'woven-gold-bracelet',
@@ -308,12 +402,8 @@ export default function ZuviStore() {
       tagline:
         'Layered gold-tone weave designed for effortless everyday stack or solo wear.',
       cardImage: 'Gold Multi-Band Ring on Emerald Velvet.png',
-      angles: [
-        { file: 'Gold Multi-Band Ring on Emerald Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Gold Multi-Band Ring on Emerald Velvet.png', label: 'Studio Angle' }],
     },
-
-    // PENDANTS (swap to dedicated pendant files in public/images/ when added)
     {
       id: 'teardrop-pave-pendant',
       category: 'PENDANTS',
@@ -324,9 +414,7 @@ export default function ZuviStore() {
       tagline:
         'Everyday anti-tarnish pendant finished in rich 18k PVD gold over stainless steel.',
       cardImage: 'Pear Gemstone Butterfly Ring on Velvet.png',
-      angles: [
-        { file: 'Pear Gemstone Butterfly Ring on Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Pear Gemstone Butterfly Ring on Velvet.png', label: 'Studio Angle' }],
     },
     {
       id: 'crown-leaf-pendant',
@@ -338,9 +426,7 @@ export default function ZuviStore() {
       tagline:
         'Sculpted leaf and crystal pendant built to hold its finish through daily campus wear.',
       cardImage: 'Four-View Gold Leaf Ring on Velvet.png',
-      angles: [
-        { file: 'Four-View Gold Leaf Ring on Velvet.png', label: 'Studio Angle' },
-      ],
+      angles: [{ file: 'Four-View Gold Leaf Ring on Velvet.png', label: 'Studio Angle' }],
     },
   ];
 
@@ -360,26 +446,45 @@ export default function ZuviStore() {
   const dragStartX = useRef<number | null>(null);
   const startTilt = useRef<number>(0);
 
-  // IMS Event Video Reels (public/videos/video1.mp4 - video3.mp4)
+  // IMS Event Video Reels
   const [activeVideo, setActiveVideo] = useState('video1.mp4');
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // Checkout State
+  // Checkout + 2-Minute Dynamic QR + UTR State
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState({
     name: activeHeroRing.name,
     price: activeHeroRing.price,
     originalPrice: activeHeroRing.originalPrice,
   });
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    address: '',
-    pincode: '',
-    city: '',
-  });
   const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
   const [step, setStep] = useState<'form' | 'qr' | 'success'>('form');
+  const [secondsLeft, setSecondsLeft] = useState(120);
+  const [utrNumber, setUtrNumber] = useState('');
+  const [utrError, setUtrError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    if (!isCheckoutOpen || step !== 'qr' || secondsLeft <= 0) return;
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isCheckoutOpen, step, secondsLeft]);
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const upiPaymentUri = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(
+    MERCHANT_NAME
+  )}&am=${selectedItem.price.toFixed(2)}&cu=INR&tn=${encodeURIComponent(
+    `ZUVI - ${selectedItem.name}`
+  )}`;
 
   const getImageUrl = (fileName: string) => encodeURI(`/images/${fileName}`);
 
@@ -397,8 +502,12 @@ export default function ZuviStore() {
     }
   ) => {
     setSelectedItem(item);
-    setIsCheckoutOpen(true);
+    setErrors({});
+    setSecondsLeft(120);
+    setUtrNumber('');
+    setUtrError('');
     setStep('form');
+    setIsCheckoutOpen(true);
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -427,7 +536,7 @@ export default function ZuviStore() {
     }
   };
 
-  const validateAndProceed = (e: React.FormEvent) => {
+  const validateAndProceed = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { phone?: string; pincode?: string } = {};
     if (!/^\d{10}$/.test(formData.phone)) {
@@ -441,25 +550,77 @@ export default function ZuviStore() {
       return;
     }
     setErrors({});
+
+    if (user) {
+      try {
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            name: formData.name,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            pincode: formData.pincode,
+            email: user.email,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error saving address:', err);
+      }
+    }
+
+    setSecondsLeft(120);
+    setUtrNumber('');
+    setUtrError('');
     setStep('qr');
   };
 
-  const handlePaymentConfirmed = async () => {
+  const handlePaymentConfirmed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{12}$/.test(utrNumber.trim())) {
+      setUtrError('Enter a valid 12-digit UPI Transaction ID / UTR from your payment app.');
+      return;
+    }
+    setUtrError('');
+    setIsVerifying(true);
+
     try {
+      if (user) {
+        await addDoc(collection(db, 'orders'), {
+          userId: user.uid,
+          customerEmail: user.email,
+          customerName: formData.name,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          pincode: formData.pincode,
+          productName: selectedItem.name,
+          price: selectedItem.price,
+          utrNumber: utrNumber.trim(),
+          status: 'Payment Verifying',
+          createdAt: serverTimestamp(),
+        });
+        await fetchUserOrders(user.uid);
+      }
+
       await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: 'YOUR_WEB3FORMS_ACCESS_KEY',
-          subject: `New ZUVI Order from ${formData.name}`,
+          subject: `New ZUVI Order (UTR: ${utrNumber.trim()}) from ${formData.name}`,
           from_name: 'ZUVI Store',
-          message: `Product: ${selectedItem.name} | Price: ₹${selectedItem.price} | Customer: ${formData.name} | Phone: ${formData.phone} | Address: ${formData.address}, ${formData.city} - ${formData.pincode}`,
+          message: `Product: ${selectedItem.name} | Amount: ₹${selectedItem.price} | UTR: ${utrNumber.trim()} | Customer: ${formData.name} | Phone: ${formData.phone} | Address: ${formData.address}, ${formData.city} - ${formData.pincode}`,
         }),
       });
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsVerifying(false);
+      setStep('success');
     }
-    setStep('success');
   };
 
   return (
@@ -496,7 +657,6 @@ export default function ZuviStore() {
       {/* Smooth Cursor Sea Sheen & Water Ripples */}
       <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
         <motion.div style={{ background: seaGlowBg }} className="absolute inset-0" />
-
         <AnimatePresence>
           {ripples.map((ripple) => (
             <motion.span
@@ -508,10 +668,7 @@ export default function ZuviStore() {
               onAnimationComplete={() =>
                 setRipples((prev) => prev.filter((item) => item.id !== ripple.id))
               }
-              style={{
-                left: ripple.x - 60,
-                top: ripple.y - 60,
-              }}
+              style={{ left: ripple.x - 60, top: ripple.y - 60 }}
               className="w-[120px] h-[120px] rounded-full border border-emerald-200/35 shadow-[0_0_18px_rgba(110,231,183,0.2)] absolute"
             />
           ))}
@@ -520,20 +677,52 @@ export default function ZuviStore() {
 
       {/* Navigation Header */}
       <header className="border-b border-emerald-800/35 bg-[#0a1f16]/80 backdrop-blur-xl sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-serif tracking-widest text-amber-300 font-bold">ZUVI</h1>
-            <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider text-emerald-200/85 border border-emerald-700/50 px-2.5 py-0.5 rounded-full font-mono bg-emerald-950/60">
-              PREMIUM ANTI-TARNISH JEWELRY
+            <span className="hidden xl:inline-block text-[10px] uppercase tracking-wider text-emerald-200/85 border border-emerald-700/50 px-2.5 py-0.5 rounded-full font-mono bg-emerald-950/60">
+              ANTI-TARNISH JEWELRY
             </span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-wider text-emerald-100/75 font-mono">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <nav className="hidden lg:flex items-center gap-5 text-xs uppercase tracking-wider text-emerald-100/75 font-mono">
               <a href="#collections" className="hover:text-amber-300 transition">Collections</a>
               <a href="#proof" className="hover:text-amber-300 transition">Why It Lasts</a>
               <a href="#event" className="hover:text-amber-300 transition">IMS Event</a>
             </nav>
+
+            {!authLoading && user ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetchUserOrders(user.uid);
+                    setIsOrdersOpen(true);
+                  }}
+                  className="bg-emerald-950/85 hover:bg-emerald-900 text-emerald-100 border border-emerald-700/50 px-3.5 py-2 rounded-lg text-xs font-mono transition"
+                >
+                  Orders ({userOrders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="text-[11px] font-mono text-emerald-300/80 hover:text-amber-300 px-2 py-1.5 transition"
+                  title={`Signed in as ${user.email}`}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                className="bg-emerald-950/85 hover:bg-emerald-900 text-emerald-100 border border-emerald-700/50 px-3.5 py-2 rounded-lg text-xs font-mono transition"
+              >
+                Sign In
+              </button>
+            )}
+
             <button
               onClick={() =>
                 handleBuyNow({
@@ -542,9 +731,9 @@ export default function ZuviStore() {
                   originalPrice: activeHeroRing.originalPrice,
                 })
               }
-              className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold px-5 py-2 rounded-lg transition text-xs font-mono shadow-sm"
+              className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold px-4 sm:px-5 py-2 rounded-lg transition text-xs font-mono shadow-sm shrink-0"
             >
-              Order Now — ₹{activeHeroRing.price}
+              Order — ₹{activeHeroRing.price}
             </button>
           </div>
         </div>
@@ -553,7 +742,6 @@ export default function ZuviStore() {
       {/* Editorial Hero + Floating Silk & Leaf Stage */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 pt-10 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Left Editorial Column */}
           <div className="lg:col-span-5 space-y-5">
             <div className="inline-block bg-emerald-950/75 border border-emerald-700/50 px-3.5 py-1 rounded-full text-amber-300 text-[11px] font-mono backdrop-blur-sm">
               Launch Price ₹{activeHeroRing.price} • {activeHeroRing.name}
@@ -600,7 +788,6 @@ export default function ZuviStore() {
             </div>
           </div>
 
-          {/* Right Arched Dark Silk & Botanical Floating Ring Stage */}
           <div className="lg:col-span-7">
             <div
               className="relative rounded-t-[180px] rounded-b-3xl p-5 md:p-7 border border-emerald-600/35 shadow-[0_24px_60px_rgba(3,12,8,0.55)] overflow-hidden"
@@ -609,7 +796,6 @@ export default function ZuviStore() {
                   'linear-gradient(160deg, rgba(25, 74, 53, 0.72) 0%, rgba(14, 46, 32, 0.82) 52%, rgba(9, 30, 21, 0.92) 100%)',
               }}
             >
-              {/* Decorative Botanical Leaves */}
               <svg
                 viewBox="0 0 240 240"
                 aria-hidden="true"
@@ -624,7 +810,6 @@ export default function ZuviStore() {
                 <path d="M155 70 C175 75, 195 65, 200 45 C180 45, 162 55, 155 70 Z" />
               </svg>
 
-              {/* Floating Silk Stage */}
               <div
                 className="relative h-80 md:h-[420px] rounded-2xl bg-[#071811]/65 backdrop-blur-md border border-emerald-600/30 flex flex-col items-center justify-center p-6 cursor-grab active:cursor-grabbing select-none overflow-hidden"
                 onPointerDown={handlePointerDown}
@@ -667,7 +852,6 @@ export default function ZuviStore() {
                 </div>
               </div>
 
-              {/* Controls Bar: Tilt Slider, Float Toggle & Ring Thumbnails */}
               <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#081b13]/80 backdrop-blur-md border border-emerald-700/35 rounded-2xl px-4 py-3">
                 <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
                   <button
@@ -691,7 +875,6 @@ export default function ZuviStore() {
                   />
                 </div>
 
-                {/* Clickable Ring Thumbnails to Switch Stage Preview */}
                 <div className="flex items-center gap-2 shrink-0 overflow-x-auto max-w-full">
                   {ringCatalog.slice(0, 6).map((ring) => (
                     <button
@@ -719,7 +902,7 @@ export default function ZuviStore() {
         </div>
       </section>
 
-      {/* Jewelry Categories Section (RINGS, EARINGS, JUMKA, BRACELTS, PENDANTS) */}
+      {/* Jewelry Categories Section */}
       <section id="collections" className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
@@ -764,9 +947,7 @@ export default function ZuviStore() {
                     className="max-h-full max-w-full object-contain rounded-xl group-hover:scale-105 transition duration-300"
                   />
                   <span className="absolute bottom-3 right-3 text-[10px] font-mono bg-[#0a1f16]/90 text-amber-300 border border-emerald-700/40 px-2.5 py-1 rounded-full">
-                    {item.angles.length > 1
-                      ? `${item.angles.length} angles`
-                      : 'Inspect view'}
+                    {item.angles.length > 1 ? `${item.angles.length} angles` : 'Inspect view'}
                   </span>
                 </div>
 
@@ -806,7 +987,7 @@ export default function ZuviStore() {
         </div>
       </section>
 
-      {/* Humanized Feature Section */}
+      {/* Why It Lasts */}
       <section id="proof" className="relative z-10 max-w-5xl mx-auto px-6 py-14">
         <div className="text-center mb-10">
           <h3 className="text-3xl font-serif text-white">
@@ -844,7 +1025,7 @@ export default function ZuviStore() {
         </div>
       </section>
 
-      {/* Authentic IMS Ghaziabad Offline Event Section */}
+      {/* IMS Ghaziabad Offline Event Section */}
       <section id="event" className="relative z-10 max-w-5xl mx-auto px-6 py-14">
         <div className="bg-[#0e2a1e]/75 border border-emerald-700/40 rounded-3xl p-6 md:p-10 shadow-2xl backdrop-blur-md">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -1004,6 +1185,60 @@ export default function ZuviStore() {
         )}
       </AnimatePresence>
 
+      {/* My Orders Modal */}
+      {isOrdersOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0e2a1e] text-white border border-emerald-700/50 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative my-8 space-y-4">
+            <button
+              onClick={() => setIsOrdersOpen(false)}
+              className="absolute top-4 right-4 text-emerald-200 hover:text-white text-lg"
+            >
+              ✕
+            </button>
+            <div>
+              <span className="text-[11px] font-mono uppercase text-amber-300">Account</span>
+              <h3 className="text-2xl font-serif font-bold">My ZUVI Orders</h3>
+              {user?.email && (
+                <p className="text-xs text-emerald-200/70 font-mono">{user.email}</p>
+              )}
+            </div>
+
+            {loadingOrders ? (
+              <p className="text-xs font-mono text-emerald-200/70 py-6 text-center">
+                Loading your orders...
+              </p>
+            ) : userOrders.length === 0 ? (
+              <p className="text-sm text-emerald-100/75 py-6 text-center">
+                No orders placed yet. Click Buy Now on any item to place your first order.
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {userOrders.map((ord) => (
+                  <div
+                    key={ord.id}
+                    className="bg-[#071811] border border-emerald-800/60 rounded-xl p-4 space-y-1.5 text-xs font-mono"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-bold text-sm font-sans">
+                        {ord.productName}
+                      </span>
+                      <span className="text-amber-300 font-bold">₹{ord.price}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-emerald-200/75">
+                      <span>UTR: {ord.utrNumber}</span>
+                      <span className="text-amber-300">{ord.status}</span>
+                    </div>
+                    <p className="text-emerald-300/60">
+                      {ord.city} - {ord.pincode}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Fullscreen Video Modal */}
       {isVideoModalOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -1036,10 +1271,22 @@ export default function ZuviStore() {
 
             {step === 'form' && (
               <form onSubmit={validateAndProceed} className="space-y-4">
-                <h3 className="text-2xl font-serif text-amber-300 font-bold mb-1">
-                  Enter Shipping Details
-                </h3>
-                <p className="text-xs text-emerald-100/75 mb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-2xl font-serif text-amber-300 font-bold">
+                    Shipping Details
+                  </h3>
+                  {!user && (
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      className="text-[11px] font-mono bg-[#071811] hover:bg-emerald-950 border border-emerald-700/60 text-amber-300 px-3 py-1.5 rounded-lg transition"
+                    >
+                      Sign in to save account
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-xs text-emerald-100/75">
                   Item: <span className="font-semibold text-white">{selectedItem.name}</span> —{' '}
                   <span className="font-bold text-amber-300">₹{selectedItem.price}</span>
                 </p>
@@ -1123,35 +1370,88 @@ export default function ZuviStore() {
                   type="submit"
                   className="w-full bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold py-3.5 rounded-xl transition mt-4 font-mono text-xs uppercase tracking-wider"
                 >
-                  Pay via UPI (₹{selectedItem.price})
+                  Generate 2-Min UPI QR (₹{selectedItem.price})
                 </button>
               </form>
             )}
 
             {step === 'qr' && (
-              <div className="text-center space-y-6 py-2">
-                <h3 className="text-2xl font-serif text-amber-300 font-bold">
-                  Scan & Pay ₹{selectedItem.price}
-                </h3>
-                <p className="text-xs text-emerald-200/80 font-mono">
-                  Use Google Pay, PhonePe, Paytm, or BHIM
-                </p>
+              <form onSubmit={handlePaymentConfirmed} className="text-center space-y-4 py-1">
+                <div className="flex items-center justify-between bg-[#071811] border border-emerald-800/60 px-4 py-2 rounded-xl text-xs font-mono">
+                  <span className="text-emerald-200/80">Session Expires In</span>
+                  <span
+                    className={`font-bold ${
+                      secondsLeft <= 30 ? 'text-rose-400 animate-pulse' : 'text-amber-300'
+                    }`}
+                  >
+                    {formatTimer(secondsLeft)}
+                  </span>
+                </div>
 
-                <div className="bg-white p-4 rounded-2xl w-56 h-56 mx-auto flex items-center justify-center border-2 border-amber-300/40 shadow-md">
-                  <img
-                    src="/images/qr.png"
-                    alt="UPI QR Code"
-                    className="w-full h-full object-contain"
+                <div>
+                  <h3 className="text-2xl font-serif text-amber-300 font-bold">
+                    Scan &amp; Pay ₹{selectedItem.price}
+                  </h3>
+                  <p className="text-xs text-emerald-200/80 font-mono mt-1">
+                    Exact amount ₹{selectedItem.price} locked • GPay, PhonePe, Paytm
+                  </p>
+                </div>
+
+                {secondsLeft > 0 ? (
+                  <div className="bg-white p-4 rounded-2xl w-52 h-52 mx-auto flex items-center justify-center border-2 border-amber-300/50 shadow-md">
+                    <QRCodeSVG value={upiPaymentUri} size={176} level="H" />
+                  </div>
+                ) : (
+                  <div className="bg-[#071811] border border-rose-500/40 rounded-2xl p-6 space-y-3">
+                    <p className="text-sm text-rose-300 font-mono">QR session expired (02:00).</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSecondsLeft(120);
+                        setUtrError('');
+                      }}
+                      className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold px-4 py-2 rounded-xl text-xs font-mono"
+                    >
+                      Generate Fresh 2-Min QR
+                    </button>
+                  </div>
+                )}
+
+                {secondsLeft > 0 && (
+                  <a
+                    href={upiPaymentUri}
+                    className="inline-block text-[11px] font-mono text-amber-300 underline hover:text-amber-200"
+                  >
+                    On mobile? Open UPI app directly →
+                  </a>
+                )}
+
+                <div className="text-left pt-1">
+                  <label className="block text-[11px] uppercase font-mono text-emerald-200/80 mb-1">
+                    12-Digit UPI UTR / Transaction ID *
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={12}
+                    required
+                    disabled={secondsLeft === 0 || isVerifying}
+                    value={utrNumber}
+                    onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 432918472615"
+                    className="w-full bg-[#071811] border border-emerald-800/60 rounded-xl px-4 py-2.5 text-white text-sm font-mono tracking-wider focus:outline-none focus:border-amber-300 disabled:opacity-50"
                   />
+                  {utrError && <p className="text-rose-400 text-xs mt-1">{utrError}</p>}
                 </div>
 
                 <button
-                  onClick={handlePaymentConfirmed}
-                  className="w-full bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold py-3.5 rounded-xl transition font-mono text-xs uppercase tracking-wider"
+                  type="submit"
+                  disabled={secondsLeft === 0 || isVerifying}
+                  className="w-full bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-[#081a12] font-bold py-3.5 rounded-xl transition font-mono text-xs uppercase tracking-wider"
                 >
-                  I Have Completed Payment
+                  {isVerifying ? 'Recording Order...' : 'Verify UTR & Confirm Order'}
                 </button>
-              </div>
+              </form>
             )}
 
             {step === 'success' && (
@@ -1159,16 +1459,30 @@ export default function ZuviStore() {
                 <div className="w-14 h-14 bg-amber-400 text-[#081a12] font-bold rounded-full flex items-center justify-center mx-auto text-xl">
                   ✓
                 </div>
-                <h3 className="text-2xl font-serif text-white font-bold">Order Confirmed!</h3>
+                <h3 className="text-2xl font-serif text-white font-bold">Order Recorded!</h3>
                 <p className="text-emerald-100/80 text-sm max-w-sm mx-auto">
-                  Thanks for ordering from ZUVI! We&apos;ve recorded your order details and will dispatch it shortly.
+                  UTR <span className="font-mono text-amber-300">{utrNumber}</span> is logged under{' '}
+                  {user ? 'your account orders' : 'our order queue'} for verification and dispatch.
                 </p>
-                <button
-                  onClick={() => setIsCheckoutOpen(false)}
-                  className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold font-mono text-xs uppercase px-6 py-2.5 rounded-xl transition"
-                >
-                  Back to Store
-                </button>
+                <div className="flex items-center justify-center gap-3">
+                  {user && (
+                    <button
+                      onClick={() => {
+                        setIsCheckoutOpen(false);
+                        setIsOrdersOpen(true);
+                      }}
+                      className="bg-emerald-950 hover:bg-emerald-900 text-emerald-100 border border-emerald-700/50 font-mono text-xs uppercase px-5 py-2.5 rounded-xl transition"
+                    >
+                      View Orders
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsCheckoutOpen(false)}
+                    className="bg-amber-400 hover:bg-amber-300 text-[#081a12] font-bold font-mono text-xs uppercase px-6 py-2.5 rounded-xl transition"
+                  >
+                    Back to Store
+                  </button>
+                </div>
               </div>
             )}
           </div>
